@@ -120,9 +120,11 @@ mod tests {
         }
 
         let run = doc_tests();
+        // On Windows rustdoc prints the file as `src\lib.rs`.
+        let stdout = run.stdout.replace('\\', "/");
         for item in ["slugify", "Slug::new"] {
             assert!(
-                run.stdout.lines().any(|line| {
+                stdout.lines().any(|line| {
                     line.contains(&format!("src/lib.rs - {item} (line")) && line.ends_with("... ok")
                 }),
                 "`{item}` needs an `# Examples` section with a passing doc test:\n{}",

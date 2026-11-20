@@ -197,7 +197,7 @@ The starter builds with one warning,
 ## Run the kernel by hand
 
 ```text
-qemu-system-aarch64 -machine virt,gic-version=2 -accel tcg -cpu cortex-a72 -smp 1 -m 128M -display none -monitor none -serial stdio -no-reboot -kernel kernel/target/aarch64-unknown-none/debug/kernel
+qemu-system-aarch64 -machine virt,gic-version=2 -accel tcg -cpu cortex-a72 -smp 1 -m 128M -display none -monitor none -serial stdio -no-reboot -nic none -kernel kernel/target/aarch64-unknown-none/debug/kernel
 ```
 
 Serial output appears in your terminal. If the kernel does not switch the
@@ -250,7 +250,7 @@ Start QEMU with two more options. `-s` opens a debug port on TCP 1234, and
 `-S` stops the CPU before the first instruction:
 
 ```text
-qemu-system-aarch64 -machine virt,gic-version=2 -accel tcg -cpu cortex-a72 -smp 1 -m 128M -display none -monitor none -serial stdio -no-reboot -s -S -kernel kernel/target/aarch64-unknown-none/debug/kernel
+qemu-system-aarch64 -machine virt,gic-version=2 -accel tcg -cpu cortex-a72 -smp 1 -m 128M -display none -monitor none -serial stdio -no-reboot -nic none -s -S -kernel kernel/target/aarch64-unknown-none/debug/kernel
 ```
 
 In a second terminal, with gdb (`gdb-multiarch` on Debian and Ubuntu):

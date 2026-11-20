@@ -51,6 +51,8 @@ pub const QEMU_ARGS: &[&str] = &[
     "-serial",
     "stdio",
     "-no-reboot",
+    "-nic",
+    "none",
     "-kernel",
 ];
 

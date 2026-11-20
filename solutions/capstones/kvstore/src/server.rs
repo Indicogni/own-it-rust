@@ -12,6 +12,14 @@ use std::time::Duration;
 use crate::protocol::{self, Command, Fed, LineBuffer};
 use crate::store::{Incremented, Store, StoreError};
 
+/// How long a read from an idle client waits before it looks at the
+/// shutdown flag. On Linux and macOS the `shutdown` at the end of [`serve`]
+/// wakes a blocked read at once, and this timeout never matters. On Windows
+/// it does not: a blocked read returns only when the client closes or the
+/// timeout passes, so this bounds how long an idle client can delay the
+/// exit there.
+const IDLE_POLL: Duration = Duration::from_millis(100);
+
 /// The open connections. Each socket is shared by the thread that serves
 /// it and this table, so that the accepting thread can close every socket
 /// at shutdown. An `Arc` and not `try_clone`: a clone would cost a second
@@ -168,8 +176,9 @@ pub fn serve(
         }
 
         // Only this thread adds connections, so the set is final. Closing
-        // both directions makes a blocked read return 0 and a blocked
-        // write fail; each thread then leaves its loop.
+        // both directions makes a blocked write fail and, on Linux and
+        // macOS, a blocked read return 0; each thread then leaves its loop.
+        // On Windows a blocked read does not wake up; `IDLE_POLL` ends it.
         let clients = shared.clients.lock().unwrap_or_else(|e| e.into_inner());
         for stream in clients.open.values() {
             let _ = stream.shutdown(Shutdown::Both);
@@ -223,6 +232,7 @@ fn handle(shared: &Shared<'_>, stream: &TcpStream) -> Result<(), ClientError> {
     // Responses are written in one piece each; do not let the system hold
     // them back to merge them with later ones.
     stream.set_nodelay(true)?;
+    stream.set_read_timeout(Some(IDLE_POLL))?;
     // `&TcpStream` implements `Read` and `Write`, so one socket can feed a
     // reader and a writer without being cloned.
     let mut input = BufReader::new(stream);
@@ -235,7 +245,18 @@ fn handle(shared: &Shared<'_>, stream: &TcpStream) -> Result<(), ClientError> {
         if input.buffer().is_empty() {
             output.flush()?;
         }
-        let bytes = input.fill_buf()?;
+        let bytes = match input.fill_buf() {
+            Ok(bytes) => bytes,
+            // The client said nothing for `IDLE_POLL`. Nothing was read, so
+            // nothing is lost; a half-typed line stays in `line`.
+            Err(e) if is_timeout(&e) => {
+                if shared.stopping.load(Ordering::SeqCst) {
+                    break;
+                }
+                continue;
+            }
+            Err(e) => return Err(e.into()),
+        };
         if bytes.is_empty() {
             // End of input. A last line without a line feed is dropped.
             break;
@@ -254,6 +275,15 @@ fn handle(shared: &Shared<'_>, stream: &TcpStream) -> Result<(), ClientError> {
     }
     output.flush()?;
     Ok(())
+}
+
+/// Whether a read failed only because its timeout passed. Unix reports
+/// `WouldBlock`, Windows reports `TimedOut`.
+fn is_timeout(e: &io::Error) -> bool {
+    matches!(
+        e.kind(),
+        io::ErrorKind::WouldBlock | io::ErrorKind::TimedOut
+    )
 }
 
 /// Executes one request line and writes its response to `out`.

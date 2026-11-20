@@ -1066,9 +1066,24 @@ Follow the shutdown through. The client thread that reads `!` sets the
 flag and makes a connection to its own server. `accept` returns that
 connection, the accepting thread sees the flag and leaves its loop. It
 then calls `shutdown` on its second handle of every client socket. The
-thread serving the idle client was blocked in `read`; the call now returns
-`Ok(0)`, the `while let` ends, the thread ends. The inner scope has
-nothing left to wait for.
+thread serving the idle client was blocked in `read`; on Linux and macOS
+the call now returns `Ok(0)`, the `while let` ends, the thread ends. The
+inner scope has nothing left to wait for.
+
+**Windows is different.** There, `shutdown` does not wake a thread that is
+blocked in `read` on the same socket. The read returns only when the
+client closes its end. The example above still ends on Windows because
+`shutdown` also sends the end of the stream to the idle client: its
+`read_to_end` returns, `idle` is dropped when the closure ends, and that
+close finally wakes the server thread. A real client that keeps its
+connection open would keep that server thread, and the whole server,
+waiting. The standard library has no portable way to interrupt a blocked
+read, so a server that must stop on Windows too also gives each client
+socket a read timeout (`set_read_timeout`, a few hundred milliseconds at
+most). When a read times out, the thread looks at the flag and either
+leaves or reads again. Keep the `shutdown` call as well: on Linux and macOS
+it ends the reads at once, and on every system it makes a blocked write
+fail.
 
 Two details carry the design. The list of handles is changed only by the
 accepting thread, so when that thread has left its loop, no connection can
@@ -1078,9 +1093,13 @@ of `JoinHandle`s to keep and no thread that can be forgotten.
 **Mistakes people make.**
 
 - Setting a flag and expecting blocked threads to notice.
-- Giving every socket a short read timeout and checking the flag in a
-  loop. It works, and it makes every idle connection wake up many times
-  per second for nothing, and shutdown as slow as the timeout.
+- Relying on a read timeout alone. It works, but shutdown then takes as
+  long as the timeout on every system, and a blocked write is not ended
+  by it. Use the timeout as the Windows backstop next to `shutdown`, not
+  instead of it.
+- Testing the shutdown only with clients that close their connections.
+  On Windows that hides a server that cannot stop while an idle client
+  stays connected.
 - Calling `std::process::exit` instead. Threads are cut off wherever they
   are, destructors do not run, and buffered output is lost. It is a crash
   that returns 0.

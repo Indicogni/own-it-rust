@@ -555,6 +555,34 @@ fn m5_the_connection_limit() {
     }
 }
 
+/// Connects and sends `SET <key> x`, and tries again while the server says
+/// it is full. A place is given back once the server has seen the previous
+/// connection end, and that can take a moment, longer on some systems
+/// (SPEC 11.3). A refused connection never executes its `SET`.
+fn connect_and_set(server: &Server, key: &str) -> Client {
+    let deadline = Instant::now() + patience();
+    loop {
+        let mut c = server.client();
+        let _ = c.try_send_raw(format!("SET {key} x\n").as_bytes());
+        match c.try_recv() {
+            Ok(Some(reply)) if reply == b"OK" => return c,
+            Ok(Some(reply)) if reply == b"ERR too many connections" => {}
+            // A refused connection that was reset before the line arrived.
+            Ok(None) => {}
+            Err(e) if !common::is_timeout(&e) => {}
+            other => panic!("`SET {key} x` must be answered with OK (SPEC 8.5), got {other:?}"),
+        }
+        assert!(
+            Instant::now() < deadline,
+            "for {} s every new connection was refused, although at most 4 clients were \
+             connected at a time and the limit is 8. Are places given back when a \
+             connection ends (SPEC 11.3)?",
+            patience().as_secs()
+        );
+        std::thread::sleep(Duration::from_millis(10));
+    }
+}
+
 #[test]
 fn m5_connections_that_come_and_go() {
     // 300 short connections against a limit of 8: places must be given
@@ -566,8 +594,7 @@ fn m5_connections_that_come_and_go() {
             let server = &server;
             scope.spawn(move || {
                 for i in 0..75 {
-                    let mut c = server.client();
-                    c.set(format!("c{t}-{i}"), "x");
+                    let mut c = connect_and_set(server, &format!("c{t}-{i}"));
                     if i % 2 == 0 {
                         assert_eq!(c.req("QUIT"), "BYE");
                     }

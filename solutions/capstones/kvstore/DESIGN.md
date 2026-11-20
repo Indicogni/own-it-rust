@@ -336,8 +336,11 @@ connection in `read` (or, for a client that does not read, in `write`).
 2. `accept` returns that connection. The accepting thread sees the flag
    and leaves its loop.
 3. The accepting thread calls `shutdown(Both)` on every socket in the
-   table of open connections. A blocked read returns 0, a blocked write
-   fails, and each connection thread runs to its end. Only the accepting
+   table of open connections. A blocked write fails and, on Linux and
+   macOS, a blocked read returns 0; each connection thread runs to its
+   end. On Windows a blocked read does not wake up from `shutdown`, so
+   every client socket also has a 100 ms read timeout (`IDLE_POLL`): when
+   it passes, the thread checks the flag and leaves. Only the accepting
    thread ever adds to that table, and it has stopped accepting, so no
    connection can be missed.
 4. The scope ends when all threads have ended.
@@ -354,9 +357,11 @@ the first limit a server with many clients runs into.
 *Alternative: a non-blocking listener that polls the flag.* No connection
 to itself, and either a busy loop or a delay on every accept.
 
-*Alternative: read timeouts on every socket.* Each idle connection then
-wakes up several times per second for as long as the server runs, to save
-a table of sockets.
+*Alternative: read timeouts only, without the table.* Each idle
+connection still wakes up ten times per second, as it does here, but
+shutdown always waits for a timeout, and a client that does not read can
+keep a writer blocked. The table plus `shutdown` makes the exit immediate
+on Linux and macOS; the timeout is only the Windows backstop.
 
 *Alternative: `std::process::exit(0)` after syncing.* It passes every
 test. Other threads are cut off at arbitrary points, which is safe here

@@ -52,7 +52,7 @@ kernel image at the end:
 
 ```text
 qemu-system-aarch64 -machine virt,gic-version=2 -accel tcg -cpu cortex-a72
-    -smp 1 -m 128M -display none -monitor none -serial stdio -no-reboot
+    -smp 1 -m 128M -display none -monitor none -serial stdio -no-reboot -nic none
     -kernel <path to the ELF file>
 ```
 
@@ -66,6 +66,7 @@ qemu-system-aarch64 -machine virt,gic-version=2 -accel tcg -cpu cortex-a72
 | `-display none -monitor none` | No window and no QEMU console. |
 | `-serial stdio` | The first UART is connected to QEMU's standard input and output. |
 | `-no-reboot` | A reset request ends QEMU instead of restarting the guest. |
+| `-nic none` | No network card. Without it QEMU adds one and looks for its boot ROM file, which some Linux packages leave out. |
 | `-kernel` | Load this file into memory and start it. |
 
 ### 2.2 The state of the CPU when your code starts

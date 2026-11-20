@@ -260,7 +260,10 @@ each, find what can be done *from another thread* to make that happen.
 
 - A blocked `accept` returns when a connection arrives. Who could connect?
 - A blocked read or write on a socket returns when the socket is shut
-  down. To shut a socket down from another thread, that thread needs its
+  down, with one exception: on Windows a blocked read does not wake up
+  until the client closes or a read timeout passes. A short read timeout
+  on each client socket, after which the thread checks a flag, covers
+  that case. To shut a socket down from another thread, that thread needs its
   own handle on the same socket. Keep a registry of those handles, and
   think about which thread adds to it, which removes from it, and whether
   a connection can slip in after you have closed "all" of them.
