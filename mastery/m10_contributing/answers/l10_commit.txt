@@ -1,0 +1,9 @@
+# Capstone: the commit message for the issue you chose.
+# Lines that start with `#` are ignored, as in git's editor.
+# The rules are in fixture/CONTRIBUTING.md, section "Commit messages".
+TODO: area: summary in the imperative, at most 60 characters
+
+TODO: what the user saw; what the cause was; why this change is the
+right fix. Wrap the lines at 72 columns.
+
+TODO: the line that closes the issue

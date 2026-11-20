@@ -1,0 +1,17 @@
+error[E0369]: binary operation `!=` cannot be applied to type `Opaque`
+  --> tests/ui/l02/fail_no_partial_eq.rs:11:10
+   |
+11 | #[derive(Changes)]
+   |          ^^^^^^^
+   |
+note: an implementation of `PartialEq` might be missing for `Opaque`
+  --> tests/ui/l02/fail_no_partial_eq.rs:9:1
+   |
+ 9 | struct Opaque;
+   | ^^^^^^^^^^^^^ must implement `PartialEq`
+   = note: this error originates in the derive macro `Changes` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider annotating `Opaque` with `#[derive(PartialEq)]`
+   |
+ 9 + #[derive(PartialEq)]
+10 | struct Opaque;
+   |

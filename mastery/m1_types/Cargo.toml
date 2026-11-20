@@ -1,0 +1,26 @@
+# Mastery module M1: the type system in depth.
+# A standalone package: not a member of the course's root package, so you can
+# work on it (and the chapter checks can run) independently.
+[package]
+name = "m1_types"
+description = "Mastery module M1: the type system in depth"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+publish = false
+
+[workspace]
+
+# Standard library only. If this module ever needs a crate, pin it with "=".
+[dependencies]
+
+[lints.rust]
+# The only `unsafe` in this module is in lesson 04 and in the allocation
+# counter of src/support.rs. Unsafe operations must be in an `unsafe` block,
+# also inside an unsafe fn, and every block carries a SAFETY comment.
+unsafe_op_in_unsafe_fn = "deny"
+
+[lints.clippy]
+dbg_macro = "warn"
+undocumented_unsafe_blocks = "warn"

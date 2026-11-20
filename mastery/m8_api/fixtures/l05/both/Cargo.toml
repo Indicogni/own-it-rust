@@ -1,0 +1,14 @@
+# A fourth user of `swatch`: it needs wide colours and JSON output at once,
+# and nothing else. You do not need to edit this package.
+[package]
+name = "both"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+# A package of its own, so that it is built alone: `swatch` gets exactly the
+# two features below.
+[workspace]
+
+[dependencies]
+swatch = { path = "../swatch", default-features = false, features = ["wide", "json"] }

@@ -1,0 +1,14 @@
+# Check text files out with LF line endings on every system, so Windows
+# checkouts see the same bytes as Linux and macOS (include_str! predictions,
+# golden files, snapshots, patches and `cargo fmt --check` depend on it).
+* text=auto eol=lf
+
+# Binary files: never convert or diff them as text.
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary

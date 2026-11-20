@@ -1,0 +1,9 @@
+# Two users of `pacer`. You do not need to edit anything in this directory.
+#
+# - user_of_1_0 was written against pacer 1.0.0 and has not been touched since.
+#   Its manifest would say `pacer = "1.0"`: it gets every 1.x release without
+#   asking.
+# - user_of_next is waiting for the next release and uses what it adds.
+[workspace]
+resolver = "3"
+members = ["user_of_1_0", "user_of_next"]

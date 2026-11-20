@@ -1,0 +1,20 @@
+[package]
+name = "tally-core"
+description = "Parses ledger lines and adds them up by category."
+readme = "../README.md"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[features]
+default = []
+# Adds `to_json`.
+json = []
+
+[dev-dependencies]
+insta.workspace = true
+
+[lints]
+workspace = true

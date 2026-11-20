@@ -1,0 +1,79 @@
+//! LESSON 07 — Dependency requirements and lockfiles
+//! Run: cargo test --test chapter08 l07_
+//!
+//! Read first: CONCEPTS.md, section "Lesson 07".
+//!
+//! PREDICT before running: first answer `p_predictions` at the bottom (replace
+//! each `guess()` with your answer). Then consider: Does a dependency
+//! requirement select one exact version? Does a workspace have one lockfile
+//! or one per member?
+//!
+//! IMPLEMENT the tasks below. Keep the tests and add one edge case.
+//!
+//! EXPLAIN afterward: Explain compatible version requirements, the pre-1.0
+//! exception, lockfile reproducibility, and why path dependencies are useful
+//! for offline experiments.
+//!
+//! LAB: the checked lab in label_lab/ uses path dependencies with version
+//! requirements (step 5) and shows a rejected version (step 8).
+
+/// A. Model the stable numeric requirement ^1.2.3 (no prereleases/build tags):
+/// accepts >=1.2.3 and <2.0.0. Input is (major,minor,patch).
+fn accepts_1_2_3(version: (u32, u32, u32)) -> bool {
+    // Tuples compare field by field, which is exactly version order, so a
+    // half-open range of tuples is the caret interval.
+    ((1, 2, 3)..(2, 0, 0)).contains(&version)
+}
+/// B. Model the stable numeric requirement ^0.2.3: >=0.2.3 and <0.3.0.
+/// This is a limited exercise, NOT a general Cargo version resolver.
+fn accepts_0_2_3(version: (u32, u32, u32)) -> bool {
+    // Before 1.0 the minor number is the breaking one.
+    ((0, 2, 3)..(0, 3, 0)).contains(&version)
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn a_nonzero_major_compatibility() {
+        assert!(!accepts_1_2_3((1, 2, 2)));
+        assert!(accepts_1_2_3((1, 2, 3)));
+        assert!(accepts_1_2_3((1, 9, 0)));
+        assert!(!accepts_1_2_3((2, 0, 0)));
+        assert!(!accepts_1_2_3((0, 99, 99)));
+        assert!(!accepts_1_2_3((1, 1, 99)));
+        assert!(accepts_1_2_3((1, 2, u32::MAX)));
+        assert!(accepts_1_2_3((1, u32::MAX, 0)));
+        assert!(
+            accepts_1_2_3((1, 3, 0)),
+            "a higher minor resets the patch check"
+        );
+    }
+    #[test]
+    fn b_zero_major_has_narrower_compatibility() {
+        assert!(!accepts_0_2_3((0, 2, 2)));
+        assert!(accepts_0_2_3((0, 2, 3)));
+        assert!(accepts_0_2_3((0, 2, 99)));
+        assert!(!accepts_0_2_3((0, 3, 0)));
+        assert!(!accepts_0_2_3((1, 2, 3)));
+        assert!(!accepts_0_2_3((0, 1, 9)));
+        assert!(accepts_0_2_3((0, 2, u32::MAX)));
+    }
+
+    /// P. Predict BEFORE running: replace each `guess()` with your answer.
+    #[test]
+    fn p_predictions() {
+        // P1. Comparing versions as tuples and as strings.
+        let p1: (bool, bool) = (true, false);
+        assert_eq!(
+            p1,
+            ((1, 10, 0) > (1, 9, 9), "1.10.0" > "1.9.9"),
+            "P1: tuples compare numbers, strings compare characters"
+        );
+
+        // P2. Sorting version strings as text.
+        let mut versions = vec!["1.10.0", "1.9.9", "1.2.0"];
+        versions.sort();
+        let p2: Vec<&str> = vec!["1.10.0", "1.2.0", "1.9.9"];
+        assert_eq!(p2, versions, "P2: lexicographic order");
+    }
+}

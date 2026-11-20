@@ -1,0 +1,6 @@
+# November
+2026-11-02 rent 1200
+2026-11-03 groceries 12.50
+2026-11-05 books 31.98
+
+2026-11-09 groceries 45.8

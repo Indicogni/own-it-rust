@@ -1,0 +1,21 @@
+[package]
+name = "label_cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Command-line front ends for label_core: the binary half of the lab."
+publish = false
+# Step 4: this package has two binaries, so `cargo run -p label_cli` cannot
+# choose one. Name `label_cli` as the default with the `default-run` key.
+default-run = "label_cli"
+
+[features]
+# Step 6: forward this feature to label_core's `slug` feature.
+slug = ["label_core/slug"]
+
+[dependencies]
+label_core.workspace = true
+
+[lints]
+workspace = true

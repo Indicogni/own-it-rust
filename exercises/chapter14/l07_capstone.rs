@@ -1,0 +1,123 @@
+//! LESSON 07 — Capstone: configurable text processing
+//! Run: cargo test --test chapter14 l07_
+//!
+//! Read "Lesson 07" in CONCEPTS.md first: it explains the approach without the answer.
+//!
+//! PREDICT before running: Decide whether each callback needs Fn, FnMut, or FnOnce.
+//! Predict the audit state for duplicate and rejected rows.
+//!
+//! IMPLEMENT the documented tasks, then keep the tests and add an edge case.
+//! EXPLAIN afterward: Explain how the bounds express policy without hard-coding the policy.
+//! Which callback must not be invoked for rejected input?
+//!
+//! COMPILER / MANUAL LAB (optional; use examples/ch14_scratch.rs):
+//! Build a stateful predicate that accepts alternating rows, then use an owning formatter.
+//! Replace a generic callback with a boxed callable and compare the API tradeoff.
+//!
+//! TRANSFER: invent a new edge case, predict it, then add a check. A lesson is
+//! complete when its tests, predictions, and explanation are done. The lab is optional.
+
+/// A. Apply configurable policies in input order:
+/// call keep once per input; on acceptance call format once, then audit once;
+/// audit receives the formatted text. Return all formatted accepted rows.
+fn process<K, F, A>(rows: &[&str], mut keep: K, mut format: F, mut audit: A) -> Vec<String>
+where
+    K: FnMut(&str) -> bool,
+    F: FnMut(&str) -> String,
+    A: FnMut(&str),
+{
+    todo!("Task 1: implement the documented contract")
+}
+/// B. Invoke finish exactly once with the number of processed rows.
+/// The callback may consume captures, so require only FnOnce.
+fn finish_report<F: FnOnce(usize) -> String>(count: usize, finish: F) -> String {
+    todo!("Task 2: implement the documented contract")
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::cell::RefCell;
+    #[test]
+    fn a_policies_run_in_documented_order() {
+        let mut seen = vec![];
+        let mut calls = 0;
+        let mut formats = 0;
+        let out = process(
+            &["a", "", "b", "a"],
+            |s| {
+                calls += 1;
+                !s.is_empty()
+            },
+            |s| {
+                formats += 1;
+                s.to_uppercase()
+            },
+            |s| seen.push(s.to_owned()),
+        );
+        assert_eq!(out, ["A", "B", "A"]);
+        assert_eq!(seen, out, "audit must receive each formatted, accepted row");
+        assert_eq!(calls, 4, "call keep exactly once per input row");
+        assert_eq!(formats, 3, "call format only for accepted rows");
+    }
+    #[test]
+    fn a_stateful_predicate_and_empty_input_are_supported() {
+        let mut n = 0;
+        assert_eq!(
+            process(
+                &["a", "b", "c"],
+                |_| {
+                    n += 1;
+                    n % 2 == 1
+                },
+                str::to_owned,
+                |_| {}
+            ),
+            ["a", "c"]
+        );
+        assert!(
+            process(
+                &[],
+                |_| panic!("no input"),
+                str::to_owned,
+                |_| panic!("no output")
+            )
+            .is_empty()
+        );
+    }
+    #[test]
+    fn a_each_row_is_finished_before_the_next_is_examined() {
+        let events = RefCell::new(Vec::new());
+        let out = process(
+            &["a", "", "b"],
+            |s| {
+                events.borrow_mut().push(format!("keep {s}"));
+                !s.is_empty()
+            },
+            |s| {
+                events.borrow_mut().push(format!("format {s}"));
+                s.to_uppercase()
+            },
+            |s| events.borrow_mut().push(format!("audit {s}")),
+        );
+        assert_eq!(out, ["A", "B"]);
+        assert_eq!(
+            *events.borrow(),
+            [
+                "keep a", "format a", "audit A", "keep ", "keep b", "format b", "audit B"
+            ],
+            "finish one row (keep, format, audit) before looking at the next row"
+        );
+    }
+    #[test]
+    fn b_finish_can_consume_owned_data() {
+        let prefix = String::from("count");
+        assert_eq!(
+            finish_report(3, move |n| {
+                let owned = prefix;
+                format!("{owned}={n}")
+            }),
+            "count=3"
+        );
+        assert_eq!(finish_report(0, |n| n.to_string()), "0");
+    }
+}

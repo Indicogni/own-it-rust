@@ -1,0 +1,38 @@
+error: `Label` needs variants without fields
+ --> tests/ui/l04/fail_variants.rs:9:8
+  |
+9 |     Low(u8),
+  |        ^^^^
+
+error: expected string literal
+  --> tests/ui/l04/fail_variants.rs:12:13
+   |
+12 |     #[label(7)]
+   |             ^
+
+error: duplicate label `same` (variant `Middle` has it too)
+  --> tests/ui/l04/fail_variants.rs:14:13
+   |
+14 |     #[label("same")]
+   |             ^^^^^^
+
+error: duplicate `label` attribute
+  --> tests/ui/l04/fail_variants.rs:17:5
+   |
+17 |     #[label("b")]
+   |     ^^^^^^^^^^^^^
+
+error: `Label` needs variants without fields
+  --> tests/ui/l04/fail_variants.rs:18:10
+   |
+18 |       Peak {
+   |  __________^
+19 | |         height: u32,
+20 | |     },
+   | |_____^
+
+error: duplicate label `Middle2` (variant `Middle2` has it too)
+  --> tests/ui/l04/fail_variants.rs:22:13
+   |
+22 |     #[label("Middle2")]
+   |             ^^^^^^^^^

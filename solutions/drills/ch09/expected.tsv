@@ -1,0 +1,11 @@
+d01_update_moves.rs	E0382
+d02_private_field.rs	E0451
+d03_newtype_mismatch.rs	E0308
+d04_associated_fn.rs	E0599
+d05_mut_receiver.rs	E0596
+d06_derive_field.rs	E0369
+d07_refcell_conflict.rs	panic
+d08_update_copy.rs	ok
+d09_move_from_self.rs	E0507
+d10_missing_lifetime.rs	E0106
+d11_weak_upgrade.rs	panic

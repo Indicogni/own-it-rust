@@ -1,0 +1,57 @@
+// The sieve of Eratosthenes, and two things to do with the primes it finds.
+
+fn primes_below(limit) {
+    // candidate[n] says whether n can still be a prime.
+    let candidate = [];
+    for i in 0..limit { push(candidate, i >= 2); }
+
+    var n = 2;
+    while n * n < limit {
+        if candidate[n] {
+            var multiple = n * n;
+            while multiple < limit {
+                candidate[multiple] = false;
+                multiple = multiple + n;
+            }
+        }
+        n = n + 1;
+    }
+
+    let found = [];
+    for i in 0..limit {
+        if candidate[i] { push(found, i); }
+    }
+    found
+}
+
+fn contains(xs, wanted) {
+    for x in xs {
+        if x == wanted { return true; }
+    }
+    false
+}
+
+let primes = primes_below(100);
+print("primes below 100:", len(primes));
+print(primes);
+
+// Twin primes are two primes that differ by two.
+let twins = [];
+for i in 1..len(primes) {
+    if primes[i] - primes[i - 1] == 2 {
+        push(twins, [primes[i - 1], primes[i]]);
+    }
+}
+print("twin primes:", twins);
+
+// Every even number from 4 to 30 as a sum of two primes.
+var even = 4;
+while even <= 30 {
+    for p in primes {
+        if contains(primes, even - p) {
+            print(str(even) + " = " + str(p) + " + " + str(even - p));
+            break;
+        }
+    }
+    even = even + 2;
+}

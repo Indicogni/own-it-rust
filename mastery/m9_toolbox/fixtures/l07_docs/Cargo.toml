@@ -1,0 +1,18 @@
+# Lesson 07 fixture: the crate `slugs`. You edit this file, `src/lib.rs` (comments
+# and attributes only), `README.md`, and you create `examples/basic.rs` and
+# `CHANGELOG.md`.
+[package]
+name = "slugs"
+version = "0.2.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+[workspace]
+
+[features]
+# Adds `title_case`.
+titles = []
+
+[lints.rust]
+missing_docs = "warn"

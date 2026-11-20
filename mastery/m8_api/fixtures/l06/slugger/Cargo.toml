@@ -1,0 +1,23 @@
+# slugger: turns titles into short names for addresses and files.
+# Lesson 06: you write the documentation in src/lib.rs and the program in
+# examples/titles.rs. You do not need to edit this manifest.
+[package]
+name = "slugger"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+# A package of its own, not a member of a workspace above it.
+[workspace]
+
+[lints.rust]
+# The lesson builds wrong versions of this library ("mutants") with these
+# configuration names, to see whether your examples notice. See src/imp.rs.
+unexpected_cfgs = { level = "warn", check-cfg = [
+    'cfg(mutant_slug_keeps_runs)',
+    'cfg(mutant_slug_trailing_dash)',
+    'cfg(mutant_truncate_keeps_dash)',
+    'cfg(mutant_truncate_accepts_zero)',
+    'cfg(mutant_tag_allows_upper)',
+] }

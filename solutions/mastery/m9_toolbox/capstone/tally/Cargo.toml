@@ -1,0 +1,18 @@
+[package]
+name = "tally"
+description = "Adds up a ledger file by category."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[features]
+default = ["json"]
+json = ["tally-core/json"]
+
+[dependencies]
+tally-core.workspace = true
+
+[lints]
+workspace = true

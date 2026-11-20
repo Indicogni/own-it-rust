@@ -1,0 +1,153 @@
+//! LESSON 07 — Capstone: checked foreign transaction
+//! Run: cargo test --test chapter24 l07_
+//!
+//! PREDICT before running: Must foreign error text be copied before another library call? Can a failed out-parameter be inspected for debugging?
+//! IMPLEMENT the tasks below. Preserve the tests and add an edge case.
+//! EXPLAIN: Audit arguments, status, initialized output, owned error copying, and no unwinding across the ABI. Explain which obligations of a real library are not modelled here (see LABS.md).
+//! COMPILER LAB (examples/ch24_scratch.rs): Add a second call after an error and show that the already-copied Rust error remains valid. Design an RAII session that initializes a library before handles and shuts it down after all handles.
+
+use std::{
+    cell::Cell,
+    ffi::{CStr, CString, c_char, c_int},
+    mem::MaybeUninit,
+};
+thread_local! {
+    // Supplied: how many times foreign_score has been called on this thread.
+    // The tests read it to see which inputs really reached the library.
+    static FOREIGN_CALLS: Cell<usize> = const { Cell::new(0) };
+}
+// Supplied typed ABI mock: on success initializes out; on failure writes a
+// borrowed static C error pointer to error, leaving out UNINITIALIZED.
+// # Safety: name is a valid NUL-terminated string; out/error are writable aligned
+// slots. No pointer is retained. The error string must be copied by the wrapper.
+unsafe extern "C" fn foreign_score(
+    name: *const c_char,
+    weight: c_int,
+    out: *mut c_int,
+    error: *mut *const c_char,
+) -> c_int {
+    FOREIGN_CALLS.set(FOREIGN_CALLS.get().wrapping_add(1));
+    // SAFETY: caller supplies valid argument storage for the synchronous call.
+    let name = unsafe { CStr::from_ptr(name) };
+    let result = c_int::try_from(name.to_bytes().len())
+        .ok()
+        .and_then(|n| n.checked_mul(weight));
+    if weight < 0 || result.is_none() {
+        // SAFETY: error is a writable pointer slot.
+        unsafe {
+            error.write(c"invalid weight".as_ptr());
+        }
+        return -1;
+    }
+    // SAFETY: success writes the output slot exactly once.
+    unsafe {
+        out.write(result.unwrap());
+    }
+    0
+}
+/// A. Validate a Rust name as CString (NUL error => "interior NUL", without
+/// calling the library), call the foreign function exactly once with
+/// MaybeUninit output/error slots, and inspect status. Success reads only out;
+/// failure reads/copies only error into an owned String.
+fn score(name: &str, weight: c_int) -> Result<c_int, String> {
+    todo!("A: implement the contract")
+}
+/// B. Compute scores sequentially; stop at first error and return it with the
+/// failing input index. Success returns every score in order. "Stop" means
+/// that no later item reaches the library: with a real library, a later call
+/// could replace the error state that you are about to report.
+fn batch(items: &[(&str, c_int)]) -> Result<Vec<c_int>, (usize, String)> {
+    todo!("B: implement the contract")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use practice::alloc::count;
+    #[test]
+    fn a_boundary_checks_every_representation() {
+        assert_eq!(score("é", 3), Ok(6));
+        assert_eq!(score("", 9), Ok(0));
+        assert_eq!(score("bad\0name", 2), Err("interior NUL".into()));
+        let error = score("abc", -1).unwrap_err();
+        assert_eq!(score("ok", 4), Ok(8));
+        assert_eq!(error, "invalid weight");
+        assert_eq!(score("abc", c_int::MAX), Err("invalid weight".into()));
+    }
+    #[test]
+    fn a_zero_weight_and_the_overflow_edge() {
+        assert_eq!(score("abc", 0), Ok(0), "0 is a score, not a failure");
+        let max_ok = c_int::MAX / 2;
+        assert_eq!(score("ab", max_ok), Ok(max_ok * 2));
+        assert_eq!(score("ab", max_ok + 1), Err("invalid weight".into()));
+        assert_eq!(
+            score("\0", -1),
+            Err("interior NUL".into()),
+            "NUL is checked before the call"
+        );
+    }
+    #[test]
+    fn a_only_valid_names_reach_the_library() {
+        let before = FOREIGN_CALLS.get();
+        assert_eq!(score("abc", 2), Ok(6));
+        assert_eq!(
+            FOREIGN_CALLS.get() - before,
+            1,
+            "score must ask the library exactly once, not compute the result in Rust"
+        );
+        let before = FOREIGN_CALLS.get();
+        assert_eq!(score("a\0b", 2), Err("interior NUL".into()));
+        assert_eq!(
+            FOREIGN_CALLS.get() - before,
+            0,
+            "a name with an interior NUL must be rejected before any foreign call"
+        );
+    }
+    #[test]
+    fn a_score_allocates_only_what_it_returns_or_passes() {
+        let (ok, allocations) = count(|| score("abc", 2));
+        assert_eq!(ok, Ok(6));
+        assert!(
+            allocations <= 1,
+            "only the CString argument; got {allocations}"
+        );
+        let (err, allocations) = count(|| score("abc", -2));
+        assert_eq!(err, Err("invalid weight".to_string()));
+        assert!(
+            allocations <= 2,
+            "the CString and the copied message; got {allocations}"
+        );
+    }
+    #[test]
+    fn b_batch_reports_index_and_stops() {
+        assert_eq!(batch(&[("a", 2), ("bb", 3)]), Ok(vec![2, 6]));
+        let before = FOREIGN_CALLS.get();
+        assert_eq!(
+            batch(&[("a", 2), ("b", -1), ("c", 4)]),
+            Err((1, "invalid weight".into()))
+        );
+        assert_eq!(
+            FOREIGN_CALLS.get() - before,
+            2,
+            "batch must stop at the failing item: items 0 and 1 reach the library, item 2 never does"
+        );
+        assert_eq!(batch(&[]), Ok(vec![]));
+    }
+    #[test]
+    fn b_batch_reports_the_first_of_several_errors() {
+        let before = FOREIGN_CALLS.get();
+        assert_eq!(
+            batch(&[("x\0", 1), ("y", -1)]),
+            Err((0, "interior NUL".into()))
+        );
+        assert_eq!(
+            FOREIGN_CALLS.get() - before,
+            0,
+            "the first item fails before any foreign call, and the second is never tried"
+        );
+        assert_eq!(
+            batch(&[("a", 1), ("b", 1), ("c", -5)]),
+            Err((2, "invalid weight".into()))
+        );
+    }
+}

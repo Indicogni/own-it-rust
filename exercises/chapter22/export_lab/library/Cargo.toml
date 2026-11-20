@@ -1,0 +1,11 @@
+[package]
+license = "MIT"
+name = "chapter22-event-library"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.99"
+# A course fixture, never a crates.io package.
+publish = false
+[dev-dependencies]
+# l06's prediction test uses `practice::guess` from the exercise repository.
+practice = { package = "own_it", path = "../../../.." }

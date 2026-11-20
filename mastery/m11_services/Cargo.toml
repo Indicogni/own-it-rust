@@ -1,0 +1,78 @@
+# Mastery module M11: Rust as a service.
+# A standalone workspace: not a member of the course's root package, so the
+# chapter checks never download or build these crates.
+[workspace]
+members = ["wire", "capstone"]
+default-members = [".", "wire", "capstone"]
+resolver = "3"
+
+[workspace.package]
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+publish = false
+
+# Every version is pinned with "=" so that error texts, response formats and
+# log lines match the tests. README.md explains each choice.
+[workspace.dependencies]
+argon2 = "=0.6.0"
+axum = { version = "=0.8.9", default-features = false, features = ["http1", "json", "macros", "matched-path", "query", "tokio"] }
+crc32fast = "=1.5.5"
+futures-core = "=0.3.34"
+hmac = "=0.13.0"
+hyper-util = { version = "=0.1.21", features = ["client-legacy", "http1", "tokio"] }
+rayon = "=1.12.0"
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = "=1.0.154"
+sha2 = "=0.11.1"
+sqlx = { version = "=0.9.1", default-features = false, features = ["derive", "macros", "migrate", "runtime-tokio", "sqlite"] }
+thiserror = "=2.0.21"
+tokio = { version = "=1.54.1", features = ["io-util", "macros", "net", "rt-multi-thread", "signal", "sync", "time"] }
+toml = "=1.2.1"
+tower = { version = "=0.5.3", features = ["limit", "timeout", "util"] }
+tower-http = { version = "=0.7.1", features = ["compression-gzip", "limit", "request-id", "timeout"] }
+tracing = "=0.1.44"
+tracing-subscriber = { version = "=0.3.23", default-features = false, features = ["fmt", "std"] }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+dbg_macro = "warn"
+
+[package]
+name = "m11_services"
+description = "Mastery module M11: database-backed, observable network services"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+argon2.workspace = true
+axum.workspace = true
+beacon_wire = { path = "wire" }
+futures-core.workspace = true
+hmac.workspace = true
+hyper-util.workspace = true
+rayon.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+sqlx.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+toml.workspace = true
+tower.workspace = true
+tower-http.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+[dev-dependencies]
+# Paused virtual time for #[tokio::test(start_paused = true)].
+tokio = { workspace = true, features = ["test-util"] }
+
+[lints]
+workspace = true

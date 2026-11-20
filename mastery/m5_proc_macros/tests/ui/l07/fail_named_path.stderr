@@ -1,0 +1,5 @@
+error[E0433]: cannot find `no_such_module` in the crate root
+  --> tests/ui/l07/fail_named_path.rs:11:24
+   |
+11 | #[named(crate = crate::no_such_module)]
+   |                        ^^^^^^^^^^^^^^ could not find `no_such_module` in the crate root

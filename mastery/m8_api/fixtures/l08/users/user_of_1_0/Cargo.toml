@@ -1,0 +1,9 @@
+[package]
+name = "user_of_1_0"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+# In real life: pacer = "1.0"
+pacer = { path = "../../pacer" }

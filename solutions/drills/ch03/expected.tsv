@@ -1,0 +1,10 @@
+d01_ambiguous_method.rs	E0689
+d02_implicit_widening.rs	E0308
+d03_overflow_panic.rs	panic
+d04_float_division.rs	ok
+d05_integer_condition.rs	E0308
+d06_tuple_index.rs	E0608
+d07_array_length.rs	E0435
+d08_string_index.rs	E0277
+d09_char_boundary.rs	panic
+d10_char_cast.rs	E0604

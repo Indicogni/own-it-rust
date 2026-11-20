@@ -1,0 +1,11 @@
+d01_dyn_compatible.rs	E0038
+d02_trait_in_scope.rs	E0599
+d03_orphan_rule.rs	E0117
+d04_missing_bound.rs	E0369
+d05_impl_trait_one_type.rs	E0308
+d06_extension_trait.rs	ok
+d07_associated_type.rs	E0046
+d08_sort_floats.rs	E0277
+d09_precise_capture.rs	E0597
+d10_downcast.rs	panic
+d11_uncovered_parameter.rs	E0210

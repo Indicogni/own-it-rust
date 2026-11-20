@@ -1,0 +1,29 @@
+# Lesson 07 fixture: the crate `slugs`. You edit this file, `src/lib.rs` (comments
+# and attributes only), `README.md`, and you create `examples/basic.rs` and
+# `CHANGELOG.md`.
+[package]
+name = "slugs"
+version = "0.2.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "Turns titles into URL slugs such as `own-it-hands-on-mastery-of-rust`."
+readme = "README.md"
+repository = "https://example.com/indicogni/slugs"
+keywords = ["slug", "url", "text"]
+categories = ["text-processing"]
+
+[workspace]
+
+[features]
+# Adds `title_case`.
+titles = []
+
+[lints.rust]
+missing_docs = "warn"
+
+# docs.rs builds with a nightly toolchain. These settings make it document every
+# feature and switch on the "available on crate feature ..." labels.
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

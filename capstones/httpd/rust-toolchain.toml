@@ -1,0 +1,5 @@
+[toolchain]
+channel = "1.99.0"
+profile = "minimal"
+# rust-src lets rust-analyzer show and analyse the standard library.
+components = ["rustfmt", "clippy", "rust-src"]

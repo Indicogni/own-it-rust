@@ -1,0 +1,10 @@
+d01_lazy_map.rs	panic
+d02_for_moves.rs	E0382
+d03_collect_type.rs	E0283
+d04_filter_refs.rs	E0308
+d05_rev_unbounded.rs	E0277
+d06_chain_len.rs	E0599
+d07_push_while_iterating.rs	E0502
+d08_collect_refs.rs	E0277
+d09_by_ref_resume.rs	ok
+d10_step_by_zero.rs	panic

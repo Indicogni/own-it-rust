@@ -1,0 +1,10 @@
+---
+source: src/l04_testing.rs
+expression: render_report(&sample_suites())
+---
+suite          passed failed ignored
+api                12      0       1
+cli_end_to_end      3      2       0
+unit              140      0       4
+total             155      2       5
+result: FAILED (2 failed)

@@ -1,0 +1,9 @@
+# Lesson 05 labs 5.3 and 5.4 (AddressSanitizer, ThreadSanitizer). See LABS.md.
+# Both programs contain a deliberate memory-safety bug in `unsafe` code.
+[package]
+name = "sanitize-me"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace]

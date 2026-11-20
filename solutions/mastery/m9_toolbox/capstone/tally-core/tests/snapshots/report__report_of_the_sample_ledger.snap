@@ -1,0 +1,8 @@
+---
+source: tally-core/tests/report.rs
+expression: report(&entries)
+---
+books        31.98
+groceries    58.30
+rent       1200.00
+total      1290.28

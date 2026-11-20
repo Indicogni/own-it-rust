@@ -1,0 +1,88 @@
+//! LESSON 01 — Inference and numeric method lookup
+//! Run: cargo test --test chapter03 l01_
+//! Read first: CONCEPTS.md, section "Lesson 01".
+//!
+//! PREDICT, without running: first answer `p_predictions` at the bottom (replace
+//! each `guess()` with your answer). Then consider:
+//! 1. What types do `let n = 7;` and `let x = 7.0;` default to without other clues?
+//! 2. Can a function's return type constrain the type of a local empty vector?
+//! 3. Do `(-17_i32).abs()` and `-17_i32.abs()` produce the same value?
+//!
+//! IMPLEMENT the two functions below. Avoid local type annotations in task A.
+//! EXPLAIN: Which signatures must be explicit? How does information from a
+//! return type flow back to `Vec::new()` and the loop's integers?
+//!
+//! COMPILER LAB: try `println!("{}", (-17).abs());` in the scratch program.
+//! Why doesn't the usual integer default resolve this method call? Repair it
+//! using a suffix, then using `i32::abs`. Explain the parentheses.
+
+/// A. Return three packet lengths: header, header + 16, header + 32.
+/// Practice inference: use `Vec::new`, a loop over `0..3`, and `push`.
+/// Inputs are at most 1_000; overflow is not part of this task.
+fn packet_lengths(header: u16) -> Vec<u16> {
+    // No local annotation: the return type makes this a Vec<u16>, and
+    // `header + step * 16` then makes `step` and the literal 16 u16 as well.
+    let mut lengths = Vec::new();
+    for step in 0..3 {
+        lengths.push(header + step * 16);
+    }
+    lengths
+}
+
+/// B. Compute the absolute value of -17 with the `abs` method.
+/// Make the literal's type explicit; do not just return the answer.
+fn absolute_distance() -> i32 {
+    // The suffix gives the literal a type, so `abs` can be looked up. The
+    // parentheses make the method apply to -17, not to 17.
+    (-17_i32).abs()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_packet_lengths_follow_the_header() {
+        assert_eq!(packet_lengths(4), [4_u16, 20, 36]);
+        assert_eq!(packet_lengths(0), [0_u16, 16, 32]);
+        assert_eq!(packet_lengths(1_000), [1_000_u16, 1_016, 1_032]);
+    }
+
+    #[test]
+    fn b_abs_applies_to_the_negative_value() {
+        assert_eq!(absolute_distance(), 17);
+    }
+
+    /// P. Predict BEFORE running: replace each `guess()` with your answer.
+    /// A wrong prediction is useful: read the failure, then explain it in NOTES.md.
+    #[test]
+    fn p_predictions() {
+        // P1. With no other clues, how many bytes does each default type take?
+        let n = 7;
+        let x = 7.0;
+        let p1: (usize, usize) = (4, 8);
+        assert_eq!(
+            p1,
+            (size_of_val(&n), size_of_val(&x)),
+            "P1: sizes of the default integer and float types. Left = your prediction, right = what Rust computes."
+        );
+
+        // P2. Unary minus versus a method call: what do these evaluate to?
+        let p2: (i32, i32) = (-17, 17);
+        assert_eq!(
+            p2,
+            (-17_i32.abs(), (-17_i32).abs()),
+            "P2: unary minus next to a method call. Left = your prediction, right = what Rust computes."
+        );
+
+        // P3. `a` has no suffix. Its type is decided by the next line.
+        let a = 1;
+        let narrow: u8 = a;
+        let p3: u32 = 7;
+        assert_eq!(
+            p3,
+            a.leading_zeros(),
+            "P3: leading zeros of `a`. Left = your prediction, right = what Rust computes."
+        );
+    }
+}

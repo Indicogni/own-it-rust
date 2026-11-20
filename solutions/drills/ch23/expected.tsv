@@ -1,0 +1,10 @@
+d01_raw_deref.rs	E0133
+d02_pointer_arithmetic.rs	ok
+d03_const_write.rs	E0594
+d04_unsafe_trait_impl.rs	E0200
+d05_unsafe_impl_safe_trait.rs	E0199
+d06_raw_pointer_send.rs	E0277
+d07_transmute_size.rs	E0512
+d08_static_mut.rs	E0133
+d09_layout_align.rs	panic
+d10_raw_move.rs	E0507

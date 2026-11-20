@@ -1,0 +1,9 @@
+d01_use_after_move.rs	E0382
+d02_index_move.rs	E0507
+d03_reassign.rs	ok
+d04_loop_move.rs	E0382
+d05_partial_move.rs	ok
+d06_copy_derive.rs	E0204
+d07_rc_mutation.rs	E0596
+d08_remove_past_end.rs	panic
+d09_rc_thread.rs	E0277

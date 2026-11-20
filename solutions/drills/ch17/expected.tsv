@@ -1,0 +1,10 @@
+d01_index_string.rs	E0277
+d02_slice_mid_char.rs	panic
+d03_add_two_strs.rs	E0369
+d04_plus_moves.rs	E0382
+d05_push_str_vs_char.rs	E0308
+d06_return_temporary.rs	E0515
+d07_to_string_without_display.rs	E0599
+d08_string_eq_str.rs	ok
+d09_parse_inference.rs	E0284
+d10_width_counts.rs	panic

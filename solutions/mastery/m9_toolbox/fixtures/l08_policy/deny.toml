@@ -1,0 +1,27 @@
+# cargo-deny policy, checked with cargo-deny 0.22.
+[graph]
+all-features = true
+
+[advisories]
+# Fail on every advisory for a crate in the graph, including "unmaintained".
+unmaintained = "all"
+yanked = "deny"
+# Each exception needs an advisory ID and a reason, and should be temporary.
+ignore = []
+
+[licenses]
+# The licences this project accepts. Anything else fails the check.
+allow = ["MIT", "Apache-2.0"]
+confidence-threshold = 0.9
+
+[bans]
+multiple-versions = "deny"
+wildcards = "deny"
+deny = [
+    { crate = "openssl", reason = "use rustls: no system OpenSSL in release builds" },
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]

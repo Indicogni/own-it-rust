@@ -1,0 +1,9 @@
+d01_derive_bound.rs	E0599
+d02_default_enum.rs	E0665
+d03_helper_attribute.rs	error
+d04_copy_needs_clone.rs	E0277
+d05_field_order.rs	panic
+d06_derive_on_fn.rs	E0774
+d07_two_impls.rs	E0119
+d08_cfg_attr_derive.rs	E0277
+d09_bound_on_impl.rs	ok

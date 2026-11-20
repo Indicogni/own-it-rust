@@ -1,0 +1,31 @@
+# The cargo-fuzz project of lesson 05. It is a package of its own, built only by
+# `cargo +nightly-2026-11-20 fuzz ...` (see LABS.md, labs 5.1 to 5.3).
+[package]
+name = "m9_toolbox-fuzz"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "=0.4.13"
+m9_toolbox = { path = ".." }
+
+[[bin]]
+name = "decode"
+path = "fuzz_targets/decode.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "roundtrip"
+path = "fuzz_targets/roundtrip.rs"
+test = false
+doc = false
+bench = false
+
+# Not part of any other workspace.
+[workspace]

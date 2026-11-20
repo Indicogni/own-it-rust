@@ -1,0 +1,11 @@
+# insta writes a pending snapshot here when a snapshot test fails. Review it with
+# `cargo insta review`; never commit it.
+*.snap.new
+*.pending-snap
+# cargo-mutants output.
+mutants.out*/
+# cargo-fuzz output (this package's fuzz project and the capstone's).
+**/fuzz/target/
+**/fuzz/corpus/
+**/fuzz/artifacts/
+**/fuzz/coverage/

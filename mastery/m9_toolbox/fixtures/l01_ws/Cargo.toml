@@ -1,0 +1,3 @@
+# Lesson 01 fixture. This is the file you edit most in that lesson.
+[workspace]
+members = ["crates/meter", "crates/meter-cli", "crates/tinyjson", "crates/winconsole"]

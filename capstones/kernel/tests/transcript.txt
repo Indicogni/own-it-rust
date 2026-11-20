@@ -1,0 +1,29 @@
+[m1] boot: EL1
+[m1] bss: zeroed
+[m2] console: pl011
+[m2] timer: arm generic timer
+[m2] fmt: 42 0x2a kernel
+[m2] delay: 10 ms
+[m3] bump: ok
+[m3] box: 42
+[m3] vec: 1000 items, sum 499500
+[m3] reuse: ok
+[m4] vectors: installed
+[m4] svc: 0x42
+[m4] tick 1
+[m4] tick 2
+[m4] tick 3
+[m5] coop: A0
+[m5] coop: B0
+[m5] coop: C0
+[m5] coop: A1
+[m5] coop: B1
+[m5] coop: C1
+[m5] coop: joined
+[m5] preempt: A>B B>C C>A A>B B>C C>A
+[m5] preempt: joined
+[m6] math: 2 + 3 = 5
+[m6] math: 6 * 7 = 42
+[m6] client: bye
+[m6] ipc: 3 console messages
+[m1] power off

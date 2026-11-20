@@ -1,0 +1,81 @@
+// A calculator for reverse Polish notation: "3 4 + 2 *" means (3 + 4) * 2.
+// Errors are values here: `evaluate` returns ["ok", number] or ["error", text].
+
+fn split(text) {
+    let parts = [];
+    var current = "";
+    for c in text {
+        if c == " " {
+            if current != "" { push(parts, current); }
+            current = "";
+        } else {
+            current = current + c;
+        }
+    }
+    if current != "" { push(parts, current); }
+    parts
+}
+
+fn apply(operator, a, b) {
+    if operator == "+" { ["ok", a + b] }
+    else if operator == "-" { ["ok", a - b] }
+    else if operator == "*" { ["ok", a * b] }
+    else if b == 0 { ["error", "division by zero"] }
+    else if operator == "/" { ["ok", a / b] }
+    else { ["ok", a % b] }
+}
+
+fn is_operator(token) {
+    for operator in ["+", "-", "*", "/", "%"] {
+        if token == operator { return true; }
+    }
+    false
+}
+
+fn evaluate(text) {
+    let stack = [];
+    for token in split(text) {
+        if is_operator(token) {
+            if len(stack) < 2 { return ["error", "not enough operands for " + token]; }
+            let b = pop(stack);
+            let a = pop(stack);
+            let result = apply(token, a, b);
+            if result[0] == "error" { return result; }
+            push(stack, result[1]);
+        } else {
+            let number = int(token);
+            if number == nil { return ["error", "what is " + token + "?"]; }
+            push(stack, number);
+        }
+    }
+    if len(stack) == 1 {
+        ["ok", stack[0]]
+    } else if len(stack) == 0 {
+        ["error", "nothing to evaluate"]
+    } else {
+        ["error", str(len(stack)) + " values left over"]
+    }
+}
+
+let inputs = [
+    "3 4 + 2 *",
+    "1 2 3 4 5 + + + +",
+    "100 7 / 100 7 % -",
+    "2 3 4 * + 5 -",
+    "-8 3 /",
+    "  42  ",
+    "1 +",
+    "1 0 /",
+    "5 0 %",
+    "1 2",
+    "two 2 +",
+    "",
+];
+for text in inputs {
+    let result = evaluate(text);
+    if result[0] == "ok" {
+        print("[" + text + "] =", result[1]);
+    } else {
+        print("[" + text + "] fails:", result[1]);
+    }
+}

@@ -1,0 +1,8 @@
+# Lesson 04 fixture, task C. You edit `src/lib.rs` (documentation comments only).
+[package]
+name = "thermo"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace]

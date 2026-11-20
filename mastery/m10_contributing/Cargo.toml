@@ -1,0 +1,32 @@
+[package]
+license = "MIT"
+name = "m10_contributing"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.99"
+publish = false
+
+# A standalone package: not a member of the root workspace. The fixture project and the
+# downstream crates are workspaces of their own, as they would be in real life.
+[workspace]
+exclude = ["fixture", "downstream"]
+
+[dependencies]
+# The project you work on in this module. Its own dependencies are pinned with `=` in
+# fixture/Cargo.toml and fixture/crates/tasklane-cli/Cargo.toml.
+tasklane-cli = { path = "fixture/crates/tasklane-cli" }
+tasklane-core = { path = "fixture/crates/tasklane-core" }
+tasklane-plugin = { path = "fixture/crates/tasklane-plugin" }
+
+[[bin]]
+name = "make-history"
+path = "src/bin/make_history.rs"
+
+[[test]]
+name = "downstream"
+path = "tests/downstream.rs"
+
+# Read by scripts/check_solutions.py: the solutions add tests inside fixture/ by
+# design (writing tests for the fixture project is part of the module).
+[package.metadata.course]
+editable-tests = ["fixture/"]

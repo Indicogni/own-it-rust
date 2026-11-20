@@ -1,0 +1,21 @@
+# Lesson 02 lab. You finish this crate: TODO 1 is in this file, TODO 2 in
+# build.rs and TODO 3 in src/lib.rs. The lesson file src/l02_sys_crate.rs of
+# the M6 package has the full instructions.
+[package]
+name = "fletch-sys"
+description = "Lesson 02 lab: raw bindings to the vendored fletch C library"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+publish = false
+build = "build.rs"
+# TODO 1: declare that this package links the native library `fletch`.
+
+[features]
+# Also compile and bind the 32-bit checksum (`fletch32`).
+wide = []
+
+# Supplied, so that the committed Cargo.lock stays valid.
+[build-dependencies]
+cc = "=1.11.2"

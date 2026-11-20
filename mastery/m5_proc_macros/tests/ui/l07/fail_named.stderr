@@ -1,0 +1,11 @@
+error: unknown `named` argument: expected `crate = path`
+ --> tests/ui/l07/fail_named.rs:8:9
+  |
+8 | #[named(krate = ::kit, crate = ::a)]
+  |         ^^^^^
+
+error: duplicate `crate` argument
+ --> tests/ui/l07/fail_named.rs:9:9
+  |
+9 | #[named(crate = ::b)]
+  |         ^^^^^

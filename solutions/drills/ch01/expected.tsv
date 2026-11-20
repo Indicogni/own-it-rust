@@ -1,0 +1,10 @@
+d01_misspelled_name.rs	E0425
+d02_text_for_number.rs	E0308
+d03_assign_twice.rs	E0384
+d04_same_name_twice.rs	ok
+d05_missing_semicolon.rs	error
+d06_macro_without_bang.rs	E0423
+d07_too_few_arguments.rs	E0061
+d08_semicolon_return.rs	E0308
+d09_wrong_factor.rs	panic
+d10_first_move.rs	E0382

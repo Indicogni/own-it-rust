@@ -1,0 +1,123 @@
+[package]
+# The package name is part of a lesson: chapters 8 and 10 read it with
+# env!("CARGO_PKG_NAME"), and chapter 22's export lab depends on it by name.
+name = "own_it"
+version = "0.1.0"
+edition = "2024"
+# Chapter 1 reads this value with env!("CARGO_PKG_RUST_VERSION").
+rust-version = "1.99"
+description = "Own It: Hands-On Mastery of Rust. Support library, chapter lessons and the practice coach."
+# The code is MIT-licensed; the course text and figures (*.md) are under
+# CC BY-NC-SA 4.0. See README.md, LICENSE and LICENSE-TEXT.
+license = "MIT"
+publish = false
+
+[lib]
+name = "practice"
+path = "src/lib.rs"
+
+[dependencies]
+
+[[test]]
+name = "chapter01"
+path = "exercises/chapter01/mod.rs"
+
+[[test]]
+name = "chapter02"
+path = "exercises/chapter02/mod.rs"
+
+[[test]]
+name = "chapter03"
+path = "exercises/chapter03/mod.rs"
+
+[[test]]
+name = "chapter04"
+path = "exercises/chapter04/mod.rs"
+
+[[test]]
+name = "chapter05"
+path = "exercises/chapter05/mod.rs"
+
+[[test]]
+name = "chapter06"
+path = "exercises/chapter06/mod.rs"
+
+[[test]]
+name = "chapter07"
+path = "exercises/chapter07/mod.rs"
+
+[[test]]
+name = "chapter08"
+path = "exercises/chapter08/mod.rs"
+
+[[test]]
+name = "chapter09"
+path = "exercises/chapter09/mod.rs"
+
+[[test]]
+name = "chapter10"
+path = "exercises/chapter10/mod.rs"
+
+[features]
+playground = []
+
+[[bin]]
+name = "own_it"
+path = "src/main.rs"
+required-features = ["playground"]
+
+[[test]]
+name = "chapter11"
+path = "exercises/chapter11/mod.rs"
+
+[[test]]
+name = "chapter12"
+path = "exercises/chapter12/mod.rs"
+
+[[test]]
+name = "chapter13"
+path = "exercises/chapter13/mod.rs"
+
+[[test]]
+name = "chapter14"
+path = "exercises/chapter14/mod.rs"
+
+[[test]]
+name = "chapter15"
+path = "exercises/chapter15/mod.rs"
+
+[[test]]
+name = "chapter16"
+path = "exercises/chapter16/mod.rs"
+
+[[test]]
+name = "chapter17"
+path = "exercises/chapter17/mod.rs"
+
+[[test]]
+name = "chapter18"
+path = "exercises/chapter18/mod.rs"
+
+[[test]]
+name = "chapter19"
+path = "exercises/chapter19/mod.rs"
+
+[[test]]
+name = "chapter20"
+path = "exercises/chapter20/mod.rs"
+
+[[test]]
+name = "chapter21"
+path = "exercises/chapter21/mod.rs"
+
+[[test]]
+name = "chapter22"
+path = "exercises/chapter22/mod.rs"
+
+[[test]]
+name = "chapter23"
+path = "exercises/chapter23/mod.rs"
+
+[[test]]
+name = "chapter24"
+path = "exercises/chapter24/mod.rs"

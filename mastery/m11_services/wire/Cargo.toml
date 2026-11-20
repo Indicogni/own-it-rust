@@ -1,0 +1,19 @@
+[package]
+name = "beacon_wire"
+description = "Lesson 07: the binary protocol shared by the beacon agent and server"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+crc32fast.workspace = true
+
+[dev-dependencies]
+# Only to measure the same data as JSON.
+serde.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true

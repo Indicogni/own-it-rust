@@ -1,0 +1,38 @@
+[package]
+name = "cap_game"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+publish = false
+description = "Capstone: Underkiln, an original real-time 2D game with a software renderer"
+default-run = "game"
+
+# This package stands alone. The empty table keeps Cargo from attaching it to
+# any workspace found in a parent directory.
+[workspace]
+
+[lib]
+name = "game"
+path = "src/lib.rs"
+
+[[bin]]
+name = "game"
+path = "src/main.rs"
+
+[features]
+# `window` is on by default so that `cargo run` opens the game window.
+# Turn it off (`--no-default-features`) to build the library, the headless
+# mode and every test with the standard library only.
+default = ["window"]
+window = ["dep:minifb"]
+
+[dependencies]
+# The only third-party crate, and only for the platform layer: it opens a
+# window, shows a `&[u32]` buffer in it and reports which keys are down.
+minifb = { version = "=0.29.0", optional = true }
+
+[profile.dev]
+# The software renderer touches every pixel every frame. A little
+# optimisation keeps debug builds playable; overflow checks stay on.
+opt-level = 1

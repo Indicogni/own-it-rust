@@ -1,0 +1,21 @@
+[package]
+name = "meter-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[features]
+default = ["json"]
+json = ["meter/json"]
+
+[dependencies]
+meter.workspace = true
+
+# Only resolved, downloaded and built when the target is Windows.
+[target.'cfg(windows)'.dependencies]
+winconsole.workspace = true
+
+[lints]
+workspace = true

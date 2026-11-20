@@ -1,0 +1,77 @@
+From 02829acd5e47617b8272ad7dc35ea1b48feca608 Mon Sep 17 00:00:00 2001
+From: Sam Rivera <sam@contrib.example>
+Date: Mon, 2 Nov 2026 18:11:00 +0000
+Subject: [PATCH 1/4] builtin: add a `sort` step
+
+`sort PATH` sorts the lines of a file. I needed it to get a stable
+contributor list out of several appended files.
+---
+ crates/tasklane-core/src/builtin.rs | 31 +++++++++++++++++++++++++++++
+ 1 file changed, 31 insertions(+)
+
+diff --git a/crates/tasklane-core/src/builtin.rs b/crates/tasklane-core/src/builtin.rs
+index 3d70016..53ffaf5 100644
+--- a/crates/tasklane-core/src/builtin.rs
++++ b/crates/tasklane-core/src/builtin.rs
+@@ -10,6 +10,7 @@
+ //! | `fail` | `TEXT...` | always fails with the text as the message |
+ //! | `remove` | `PATTERN` | deletes all files that match the pattern |
+ //! | `slice` | `OUT IN START LEN` | writes `LEN` bytes of `IN`, from byte `START`, to `OUT` |
++//! | `sort` | `PATH` | sorts the lines of a file |
+ //! | `upper` | `PATH` | converts a file to upper case |
+ //! | `write` | `PATH TEXT...` | creates or replaces a file |
+ //!
+@@ -30,6 +31,7 @@ pub fn all() -> Vec<Box<dyn Step>> {
+         Box::new(Fail),
+         Box::new(Remove),
+         Box::new(Slice),
++        Box::new(Sort),
+         Box::new(Upper),
+         Box::new(Write),
+     ]
+@@ -272,6 +274,27 @@ impl Step for Slice {
+     }
+ }
+ 
++/// `sort PATH`
++pub struct Sort;
++
++impl Step for Sort {
++    fn name(&self) -> &str {
++        "sort"
++    }
++    fn usage(&self) -> &str {
++        "sort PATH"
++    }
++    fn run(&self, args: &[String], ws: &mut Workspace, _: &StepContext<'_>) -> Result<(), StepError> {
++        let path = &args[0];
++        let text = ws.read(path).unwrap();
++        let mut lines: Vec<&str> = text.lines().collect();
++        lines.sort();
++        let sorted = lines.join("\n");
++        ws.write(path, sorted);
++        Ok(())
++    }
++}
++
+ /// `upper PATH`
+ pub struct Upper;
+ 
+@@ -437,6 +460,14 @@ mod tests {
+         );
+     }
+ 
++    #[test]
++    fn sort_orders_the_lines() {
++        let mut ws = Workspace::new();
++        ws.write("names", "mira\nada\njun");
++        run(&Sort, &["names"], &mut ws).unwrap();
++        assert_eq!(ws.read("names"), Some("ada\njun\nmira"));
++    }
++
+     #[test]
+     fn fail_always_fails() {
+         let mut ws = Workspace::new();
+-- 
+2.56.0
+

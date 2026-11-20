@@ -1,0 +1,22 @@
+# The procedural macros for lesson 01. This crate has no dependencies, and the
+# lesson keeps it that way: everything is done with the compiler's own
+# `proc_macro` crate.
+[package]
+name = "m5_bare"
+description = "Mastery module M5, lesson 01: derives written with proc_macro only"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+publish = false
+
+[lib]
+proc-macro = true
+
+[dependencies]
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+dbg_macro = "warn"

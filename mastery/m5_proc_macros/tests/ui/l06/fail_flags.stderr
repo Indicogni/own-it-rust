@@ -1,0 +1,23 @@
+error: unsupported flag storage: use `u8`, `u16`, `u32` or `u64`
+ --> tests/ui/l06/fail_flags.rs:9:18
+  |
+9 |     struct Perm: i32 {
+  |                  ^^^
+
+error: duplicate flag `READ`
+  --> tests/ui/l06/fail_flags.rs:12:9
+   |
+12 |         READ,
+   |         ^^^^
+
+error: duplicate flag `WRITE`
+  --> tests/ui/l06/fail_flags.rs:13:9
+   |
+13 |         WRITE,
+   |         ^^^^^
+
+error: `u8` has room for 8 flags
+  --> tests/ui/l06/fail_flags.rs:18:47
+   |
+18 |     struct Wide: u8 { A, B, C, D, E, F, G, H, I, J }
+   |                                               ^

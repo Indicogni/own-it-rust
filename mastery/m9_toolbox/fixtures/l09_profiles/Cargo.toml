@@ -1,0 +1,18 @@
+# Lesson 09, predictions. Read this package; do not edit it.
+[package]
+name = "profiles"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[profile.release]
+overflow-checks = true
+
+# `cargo build --profile small`: everything from `release`, plus these.
+[profile.small]
+inherits = "release"
+panic = "abort"
+opt-level = "z"
+strip = "symbols"

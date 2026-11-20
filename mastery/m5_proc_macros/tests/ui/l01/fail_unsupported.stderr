@@ -1,0 +1,29 @@
+error: `TypeName` (lesson 01) does not support generic types
+ --> tests/ui/l01/fail_unsupported.rs:8:8
+  |
+8 | struct Wrapper<T>(T);
+  |        ^^^^^^^
+
+error: `FieldNames` (lesson 01) does not support generic types
+  --> tests/ui/l01/fail_unsupported.rs:11:8
+   |
+11 | struct Generic<'a> {
+   |        ^^^^^^^
+
+error: `FieldNames` needs a struct with named fields
+  --> tests/ui/l01/fail_unsupported.rs:16:8
+   |
+16 | struct Pair(u8, u8);
+   |        ^^^^
+
+error: `FieldNames` needs a struct with named fields
+  --> tests/ui/l01/fail_unsupported.rs:19:6
+   |
+19 | enum Level {
+   |      ^^^^^
+
+error: `FieldNames` needs a struct with named fields
+  --> tests/ui/l01/fail_unsupported.rs:25:8
+   |
+25 | struct Unit;
+   |        ^^^^

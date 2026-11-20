@@ -1,0 +1,25 @@
+# Mastery module M2: unsafe Rust by rebuilding the standard library.
+# A standalone package: not a member of the course's root package, so the
+# chapter checks never build it, and it can be checked with Miri alone.
+[package]
+name = "m2_unsafe"
+description = "Mastery module M2: unsafe Rust by rebuilding Cell, Box, Vec, Rc and an arena"
+license = "MIT"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.99"
+publish = false
+
+[workspace]
+
+# Standard library only. Miri (a nightly tool) checks the same code; see README.md.
+[dependencies]
+
+[lints.rust]
+# Edition 2024 already warns; an error here keeps every unsafe operation inside
+# an `unsafe` block with its own SAFETY comment, also inside `unsafe fn`.
+unsafe_op_in_unsafe_fn = "deny"
+
+[lints.clippy]
+# Every `unsafe` block and `unsafe impl` needs a `// SAFETY:` comment.
+undocumented_unsafe_blocks = "warn"

@@ -1,0 +1,14 @@
+# The workflow this project has used since 2021. Bring it up to date (lesson 09).
+name: CI
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - run: cargo build
+      - run: cargo test
+        continue-on-error: true

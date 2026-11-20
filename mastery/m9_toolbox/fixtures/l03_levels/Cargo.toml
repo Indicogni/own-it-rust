@@ -1,0 +1,4 @@
+# Lesson 03, predictions. Read this workspace; do not edit it.
+[workspace]
+resolver = "3"
+members = ["levels", "forbidden"]

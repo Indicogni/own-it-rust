@@ -1,0 +1,21 @@
+# Capstone: the commit message for the issue you chose.
+# Lines that start with `#` are ignored, as in git's editor.
+# The rules are in fixture/CONTRIBUTING.md, section "Commit messages".
+plan: walk each task once
+
+Planning a target whose dependencies form a ladder of diamonds (every
+level depends on both tasks of the level below) did not finish: 30
+levels took minutes and 60 levels would take centuries. `tasklane run`
+and `tasklane plan` looked as if they hung.
+
+Since 0.4.0, visit() walks the dependencies of a task every time the
+task is reached, and only checks at the very end whether the task is
+already in the plan. With two ways to reach every level, the work
+doubles at each level. Return early when the task is already planned:
+it was walked completely before, so walking it again can neither add a
+task nor find a new cycle.
+
+The order of the plan and the reported cycle paths are unchanged. A
+new test plans a ladder of 60 levels and fails if that takes seconds.
+
+Fixes #22

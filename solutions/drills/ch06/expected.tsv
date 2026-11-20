@@ -1,0 +1,11 @@
+d01_if_without_else.rs	E0317
+d02_tail_semicolon.rs	E0308
+d03_non_exhaustive.rs	E0004
+d04_let_else_diverges.rs	E0308
+d05_break_value_for.rs	E0571
+d06_chained_comparison.rs	error
+d07_unsigned_underflow.rs	panic
+d08_cast_truncates.rs	ok
+d09_maybe_uninitialized.rs	E0381
+d10_closure_borrow.rs	E0502
+d11_temporary_borrow.rs	E0499

@@ -1,0 +1,6 @@
+# The lab of lesson 02: a `-sys` crate that you finish, and a checker crate
+# that depends on it. This is a workspace of its own, separate from the M6
+# package, exactly as a real `-sys` crate would be a separate package.
+[workspace]
+members = ["fletch-sys", "checker"]
+resolver = "3"

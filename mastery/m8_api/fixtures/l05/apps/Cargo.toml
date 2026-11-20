@@ -1,0 +1,8 @@
+# Three programs of other people that use `swatch`, in one workspace.
+# You do not need to edit anything in this directory.
+#
+# When Cargo builds several packages of a workspace in one command, it builds
+# `swatch` once, with the features of all of them together.
+[workspace]
+resolver = "3"
+members = ["basic", "exporter", "hd"]

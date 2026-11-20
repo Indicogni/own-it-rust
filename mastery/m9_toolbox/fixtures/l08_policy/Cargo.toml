@@ -1,0 +1,12 @@
+# Lesson 08 fixture: the crate `checksum`. You edit `src/lib.rs` and create
+# `deny.toml`. Do not change `rust-version`: supporting Rust 1.85 is the promise
+# this crate made to its users.
+[package]
+name = "checksum"
+version = "0.4.1"
+edition = "2024"
+rust-version = "1.85"
+license = "MIT"
+publish = false
+
+[workspace]

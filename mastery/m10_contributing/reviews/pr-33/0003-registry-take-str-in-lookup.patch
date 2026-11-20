@@ -1,0 +1,63 @@
+From 00ddb1bcf311e8cd066718bdf6f248139546f37d Mon Sep 17 00:00:00 2001
+From: Sam Rivera <sam@contrib.example>
+Date: Tue, 3 Nov 2026 09:05:00 +0000
+Subject: [PATCH 3/4] registry: take &str in lookup
+
+`lookup(&String) -> Option<&Box<dyn Step>>` made every caller build a
+String, and clippy needed two `allow`s. Take `&str` and return
+`&dyn Step` like the rest of the standard library would.
+
+Closes #27
+---
+ crates/tasklane-core/src/registry.rs | 14 +++++++-------
+ crates/tasklane-core/src/run.rs      |  2 +-
+ 2 files changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/crates/tasklane-core/src/registry.rs b/crates/tasklane-core/src/registry.rs
+index 06382c8..65f0793 100644
+--- a/crates/tasklane-core/src/registry.rs
++++ b/crates/tasklane-core/src/registry.rs
+@@ -49,11 +49,11 @@ impl Registry {
+     }
+ 
+     /// The step called `name`.
+-    // The signature has been public since 0.1 and plugins call it. Changing it is a
+-    // breaking change; see issues/0027-registry-lookup-signature.md.
+-    #[allow(clippy::ptr_arg, clippy::borrowed_box)]
+-    pub fn lookup(&self, name: &String) -> Option<&Box<dyn Step>> {
+-        self.steps.iter().find(|step| step.name() == name)
++    pub fn lookup(&self, name: &str) -> Option<&dyn Step> {
++        self.steps
++            .iter()
++            .find(|step| step.name() == name)
++            .map(|step| step.as_ref())
+     }
+ 
+     /// The names of all steps, in registration order.
+@@ -99,8 +99,8 @@ mod tests {
+         registry.register(Box::new(Nop("one"))).unwrap();
+         registry.register(Box::new(Nop("two"))).unwrap();
+         assert_eq!(registry.names(), ["one", "two"]);
+-        assert!(registry.lookup(&"two".to_string()).is_some());
+-        assert!(registry.lookup(&"three".to_string()).is_none());
++        assert!(registry.lookup("two").is_some());
++        assert!(registry.lookup("three").is_none());
+     }
+ 
+     #[test]
+diff --git a/crates/tasklane-core/src/run.rs b/crates/tasklane-core/src/run.rs
+index fa35901..c42c5b5 100644
+--- a/crates/tasklane-core/src/run.rs
++++ b/crates/tasklane-core/src/run.rs
+@@ -155,7 +155,7 @@ impl<'r> Runner<'r> {
+                 .iter()
+                 .map(|arg| expand(arg, vars))
+                 .collect::<Result<Vec<String>, Error>>()?;
+-            calls.push((step.as_ref(), args));
++            calls.push((step, args));
+         }
+         Ok(calls)
+     }
+-- 
+2.56.0
+

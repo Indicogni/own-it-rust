@@ -1,0 +1,14 @@
+# oldtimer: durations for a command-line timer.
+# Lesson 07, task B: `src/lib.rs` is yours to change. This manifest is not:
+# the library promises to build with Rust 1.74, because a large user is
+# pinned to that compiler.
+[package]
+name = "oldtimer"
+version = "2.3.0"
+edition = "2021"
+rust-version = "1.74"
+license = "MIT"
+publish = false
+
+# A package of its own, not a member of a workspace above it.
+[workspace]

@@ -1,0 +1,8 @@
+ok rejected insufficient funds
+ok insufficient funds
+Ada: 30
+Ben: 140
+["deposit 50", "withdraw 120"]
+["refused 30", "deposit 120", "refused 500"]
+unknown message: close
+false true false

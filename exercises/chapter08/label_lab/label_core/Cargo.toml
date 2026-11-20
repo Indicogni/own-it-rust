@@ -1,0 +1,15 @@
+[package]
+name = "label_core"
+version = "0.3.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+description = "Validated labels: the library half of the chapter 8 lab."
+publish = false
+
+[features]
+# Step 6: make `slug` switch on the optional dependency `label_slug`.
+slug = []
+
+[dependencies]
+# Step 6: `label_slug` belongs here, as an OPTIONAL dependency.

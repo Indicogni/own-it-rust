@@ -1,0 +1,17 @@
+error: `Reset` can only be derived for structs
+ --> tests/ui/c01/fail_errors.rs:9:5
+  |
+9 | pub enum Level {
+  |     ^^^^
+
+error: unknown `reset` argument: expected `keep`
+  --> tests/ui/c01/fail_errors.rs:16:13
+   |
+16 |     #[reset(kep)]
+   |             ^^^
+
+error: unknown `reset` argument: expected `keep`
+  --> tests/ui/c01/fail_errors.rs:18:19
+   |
+18 |     #[reset(keep, skip)]
+   |                   ^^^^

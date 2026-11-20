@@ -1,0 +1,11 @@
+error[E0277]: `Opaque` doesn't implement `Debug`
+  --> tests/ui/l03/fail_not_debug.rs:13:13
+   |
+13 |     handle: Opaque,
+   |             ^^^^^^ the trait `Debug` is not implemented for `Opaque`
+   |
+help: consider annotating `Opaque` with `#[derive(Debug)]`
+   |
+ 8 + #[derive(Debug)]
+ 9 | struct Opaque;
+   |

@@ -1,0 +1,85 @@
+// Counts the words on standard input and prints the most frequent ones.
+// A word is a run of ASCII letters; upper and lower case count as the same.
+
+let upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+let lower = "abcdefghijklmnopqrstuvwxyz";
+
+// The position of `wanted` in `items`, or nil. `items` can be a string
+// (then `wanted` is a character) or a list: `for` walks through both.
+fn find(items, wanted) {
+    var i = 0;
+    for item in items {
+        if item == wanted { return i; }
+        i = i + 1;
+    }
+    nil
+}
+
+// The lower-case form of a letter, or nil if `c` is not a letter.
+fn letter(c) {
+    let i = find(upper, c);
+    if i != nil { return lower[i]; }
+    if find(lower, c) != nil { c } else { nil }
+}
+
+fn words_of(line) {
+    let words = [];
+    var word = "";
+    for c in line {
+        let l = letter(c);
+        if l != nil {
+            word = word + l;
+        } else if word != "" {
+            push(words, word);
+            word = "";
+        }
+    }
+    if word != "" { push(words, word); }
+    words
+}
+
+// Two lists side by side: words[i] was seen counts[i] times.
+let words = [];
+let counts = [];
+var lines = 0;
+var total = 0;
+
+while true {
+    let line = input();
+    if line == nil { break; }
+    lines = lines + 1;
+    for word in words_of(line) {
+        total = total + 1;
+        let i = find(words, word);
+        if i == nil {
+            push(words, word);
+            push(counts, 1);
+        } else {
+            counts[i] = counts[i] + 1;
+        }
+    }
+}
+
+// True if entry a must come before entry b: higher count first, then by word.
+fn before(a, b) {
+    counts[a] > counts[b] or counts[a] == counts[b] and words[a] < words[b]
+}
+
+// Insertion sort of the positions 0..len(words).
+let order = [];
+for i in 0..len(words) {
+    push(order, i);
+    var j = i;
+    while j > 0 and before(order[j], order[j - 1]) {
+        let held = order[j];
+        order[j] = order[j - 1];
+        order[j - 1] = held;
+        j = j - 1;
+    }
+}
+
+print(lines, "lines,", total, "words,", len(words), "different");
+for rank in 0..5 {
+    let i = order[rank];
+    print(str(rank + 1) + ".", words[i], counts[i]);
+}

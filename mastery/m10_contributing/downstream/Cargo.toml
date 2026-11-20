@@ -1,0 +1,5 @@
+# Two crates that use tasklane from the outside, as other people's projects would.
+# The tests in ../tests/downstream.rs build them against the fixture.
+[workspace]
+resolver = "3"
+members = ["pinned", "adopter"]

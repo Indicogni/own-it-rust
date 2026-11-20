@@ -1,0 +1,11 @@
+error: `Label` can only be derived for enums
+ --> tests/ui/l04/fail_not_an_enum.rs:8:5
+  |
+8 | pub struct Job {
+  |     ^^^^^^
+
+error: `Label` can only be derived for enums
+  --> tests/ui/l04/fail_not_an_enum.rs:13:1
+   |
+13 | union Bits {
+   | ^^^^^

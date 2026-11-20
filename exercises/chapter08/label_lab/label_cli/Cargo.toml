@@ -1,0 +1,17 @@
+[package]
+name = "label_cli"
+version = "0.3.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+description = "Command-line front ends for label_core: the binary half of the lab."
+publish = false
+# Step 4: this package has two binaries, so `cargo run -p label_cli` cannot
+# choose one. Name `label_cli` as the default with the `default-run` key.
+
+[features]
+# Step 6: forward this feature to label_core's `slug` feature.
+slug = []
+
+[dependencies]
+label_core = { path = "../label_core", version = "0.3" }

@@ -1,0 +1,19 @@
+[package]
+name = "cp2_after_ch11"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+publish = false
+description = "Checkpoint 2 (after chapter 11): postage, parcels and the carriers that price them"
+
+# This package stands alone. The empty table keeps Cargo from attaching it to
+# any workspace found in a parent directory.
+[workspace]
+
+[lib]
+name = "postage"
+path = "src/lib.rs"
+
+# The standard library only.
+[dependencies]

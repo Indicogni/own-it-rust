@@ -1,0 +1,9 @@
+[package]
+name = "exporter"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+# The default features and JSON output.
+swatch = { path = "../../swatch", features = ["json"] }

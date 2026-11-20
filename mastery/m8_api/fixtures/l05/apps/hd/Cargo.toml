@@ -1,0 +1,9 @@
+[package]
+name = "hd"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+# Only wide colours: this program is small and leaves out the name table.
+swatch = { path = "../../swatch", default-features = false, features = ["wide"] }

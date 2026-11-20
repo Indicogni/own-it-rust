@@ -1,0 +1,4 @@
+# Lesson 01, predictions P1-P3. Read this workspace; do not edit it.
+[workspace]
+resolver = "3"
+members = ["app", "tool", "shared"]

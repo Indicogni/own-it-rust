@@ -1,0 +1,10 @@
+error[E0424]: cannot find value `self` in this scope
+  --> tests/ui/l08/fail_default_self.rs:16:25
+   |
+14 | #[derive(Builder)]
+   |          ------- this function has a `self` parameter, but a macro invocation can only access identifiers it receives from parameters
+15 | struct Server {
+16 |     #[builder(default = self.note.is_some())]
+   |                         ^^^^ `self` value is a keyword only available in methods with a `self` parameter
+   |
+   = note: a module named `self` exists in another namespace

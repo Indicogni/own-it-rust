@@ -1,0 +1,46 @@
+# Mastery module M6: FFI across a real language boundary.
+# A standalone package: not a member of the course's root package, so the
+# chapter checks never need a C compiler.
+[package]
+name = "m6_ffi"
+description = "Mastery module M6: FFI across a real language boundary"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+publish = false
+# Lesson 02: this package links the native library `kvtab`. Cargo allows only
+# one package per `links` name in a dependency graph, and passes the metadata
+# that build.rs prints to the build scripts of packages that depend on this one.
+links = "kvtab"
+build = "build.rs"
+
+[workspace]
+# Lesson 02's lab is a workspace of its own, as a `-sys` crate would be.
+exclude = ["sys_lab"]
+
+[lib]
+# Lesson 07: `lib` is the normal Rust library that the tests use. `staticlib`
+# also produces libm6_ffi.a (m6_ffi.lib on Windows), which a C program can link.
+crate-type = ["lib", "staticlib"]
+
+# The Rust code of this module uses only the standard library.
+[dependencies]
+
+# Every version is pinned with "=", so the build script behaves the same on
+# every machine. `cc` finds and runs the C compiler (cc, clang or MSVC cl).
+[build-dependencies]
+cc = "=1.11.2"
+
+# The tests of lesson 07 and of the capstone compile C test programs.
+[dev-dependencies]
+cc = "=1.11.2"
+
+[lints.rust]
+# Every unsafe operation needs its own block and SAFETY comment, also inside
+# an unsafe fn.
+unsafe_op_in_unsafe_fn = "deny"
+
+[lints.clippy]
+dbg_macro = "warn"
+undocumented_unsafe_blocks = "warn"

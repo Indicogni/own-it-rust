@@ -1,0 +1,12 @@
+# A package that must NOT compile: it turns the default features of `swatch`
+# off and then uses what the features provide. You do not need to edit it.
+[package]
+name = "probe"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[dependencies]
+swatch = { path = "../swatch", default-features = false }

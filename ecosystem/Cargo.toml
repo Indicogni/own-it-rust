@@ -1,0 +1,66 @@
+[package]
+license = "MIT"
+name = "ecosystem"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.99"
+publish = false
+
+# A standalone package: not a member of the root workspace.
+[workspace]
+
+[dependencies]
+anyhow = "=1.0.104"
+# Lesson E09: HTTP/1 and JSON only. The defaults would add form and query
+# extractors, tracing output, and more.
+axum = { version = "=0.8.9", default-features = false, features = ["http1", "json", "tokio"] }
+clap = { version = "=4.6.7", features = ["derive"] }
+# Lesson E09: a plain-HTTP client for loopback. The defaults would add TLS
+# (rustls), HTTP/2, and system proxy lookup, which this package never uses.
+reqwest = { version = "=0.13.5", default-features = false, features = ["json"] }
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = "=1.0.154"
+thiserror = "=2.0.21"
+# E06 and E07 need `macros`, `rt`, `sync`, and `time`. E09 adds `net` (sockets),
+# `rt-multi-thread` (its end-to-end test and its example binary), and `signal`
+# (Ctrl-C in the example binary).
+tokio = { version = "=1.54.1", features = ["macros", "net", "rt", "rt-multi-thread", "signal", "sync", "time"] }
+# Lesson E09: `CancellationToken`.
+tokio-util = "=0.7.20"
+tracing = "=0.1.44"
+tracing-subscriber = { version = "=0.3.23", default-features = false, features = ["fmt", "std"] }
+
+[dev-dependencies]
+proptest = { version = "=1.12.0", default-features = false, features = ["std"] }
+# Paused virtual time for the tests (`Builder::start_paused`, see src/test_support.rs).
+tokio = { version = "=1.54.1", features = ["test-util"] }
+# Lesson E09: `ServiceExt::oneshot` sends one request to a router without a socket.
+tower = { version = "=0.5.3", default-features = false, features = ["util"] }
+
+[[bin]]
+name = "jobq"
+path = "src/bin/jobq.rs"
+
+[[test]]
+name = "e07_capstone"
+path = "tests/e07_capstone.rs"
+
+[[test]]
+name = "e07_tracing"
+path = "tests/e07_tracing.rs"
+
+# Lesson E08: lint configuration lives in the manifest, so `cargo clippy` and CI agree.
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+dbg_macro = "warn"
+
+# Lesson E08: release builds with line tables, so profilers can name frames.
+[profile.release]
+debug = "line-tables-only"
+
+# `cargo build --profile profiling`: release speed plus full debug info for flamegraphs.
+[profile.profiling]
+inherits = "release"
+debug = true

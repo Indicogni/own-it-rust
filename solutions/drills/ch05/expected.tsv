@@ -1,0 +1,13 @@
+d01_shared_write.rs	E0596
+d02_return_local.rs	E0515
+d03_borrow_then_push.rs	E0502
+d04_two_mut_borrows.rs	E0499
+d05_last_use.rs	ok
+d06_outlives_owner.rs	E0597
+d07_missing_lifetime.rs	E0106
+d08_move_while_borrowed.rs	E0505
+d09_assign_while_borrowed.rs	E0506
+d10_split_past_end.rs	panic
+d11_two_phase.rs	ok
+d12_reborrow_or_move.rs	E0382
+d13_get_or_insert.rs	E0499

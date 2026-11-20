@@ -1,0 +1,11 @@
+# Applies when Cargo is started inside `kernel/`.
+#
+#   cargo build     builds for the bare-metal target
+#   cargo run       builds, then boots the kernel in QEMU (same machine as SPEC 2)
+#   cargo clippy    lints the kernel for the bare-metal target
+
+[build]
+target = "aarch64-unknown-none"
+
+[target.aarch64-unknown-none]
+runner = "qemu-system-aarch64 -machine virt,gic-version=2 -accel tcg -cpu cortex-a72 -smp 1 -m 128M -display none -monitor none -serial stdio -no-reboot -kernel"

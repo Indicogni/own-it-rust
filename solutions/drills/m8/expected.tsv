@@ -1,0 +1,10 @@
+d01_required_method.rs	E0046
+d02_new_public_field.rs	E0063
+d03_sealed_trait_use.rs	ok
+d04_tightened_bound.rs	E0277
+d05_lost_send.rs	E0277
+d06_provided_method_clash.rs	E0034
+d07_generic_method_added.rs	E0038
+d08_deprecation_as_error.rs	error
+d09_inherent_method_wins.rs	panic
+d10_return_type_captures.rs	E0597

@@ -1,0 +1,13 @@
+# Lesson 03 fixture. You edit this file, `src/lib.rs`, `rustfmt.toml`, and you create
+# `clippy.toml`. Do not edit `src/seeded.rs`.
+[package]
+name = "invoice"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[features]
+# Compiles `src/seeded.rs`, which a test uses to probe your Clippy configuration.
+seeded = []

@@ -1,0 +1,10 @@
+d01_atomic_array.rs	E0277
+d02_release_load.rs	error
+d03_underscore_guard.rs	error
+d04_guard_in_match.rs	panic
+d05_guard_in_if_let.rs	ok
+d06_guard_to_thread.rs	E0277
+d07_missing_sync.rs	E0277
+d08_get_mut_with_weak.rs	panic
+d09_unpark_before_park.rs	ok
+d10_fetch_add_result.rs	panic

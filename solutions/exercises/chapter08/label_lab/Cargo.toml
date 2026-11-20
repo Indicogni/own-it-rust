@@ -1,0 +1,27 @@
+# Chapter 8 lab: a small workspace that you finish step by step.
+# Start with README.md in this directory.
+
+[workspace]
+members = ["label_core", "label_slug", "label_cli", "lab_check"]
+resolver = "3"
+
+# Step 5 (workspace inheritance) adds three tables below this line:
+# [workspace.package], [workspace.dependencies] and [workspace.lints.rust].
+
+# Keys that every member shares. A member opts in key by key with
+# `key.workspace = true`.
+[workspace.package]
+version = "0.3.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+
+# One place for each dependency's source and version requirement. Paths here
+# are relative to this file, not to the member that uses the dependency.
+[workspace.dependencies]
+label_core = { path = "label_core", version = "0.3" }
+label_slug = { path = "label_slug", version = "0.3" }
+
+# Lint levels for every member that has `[lints] workspace = true`.
+[workspace.lints.rust]
+unsafe_code = "forbid"

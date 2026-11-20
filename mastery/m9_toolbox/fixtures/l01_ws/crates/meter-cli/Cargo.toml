@@ -1,0 +1,13 @@
+[package]
+name = "meter-cli"
+version = "0.2.9"
+edition = "2024"
+license = "MIT"
+publish = false
+
+[dependencies]
+meter = { path = "../meter", features = ["tinyjson"] }
+winconsole = { path = "../winconsole" }
+
+[profile.release]
+lto = true

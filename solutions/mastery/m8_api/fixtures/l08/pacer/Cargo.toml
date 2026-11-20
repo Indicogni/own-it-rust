@@ -1,0 +1,12 @@
+# pacer: how long to wait before the next retry.
+# Lesson 08 (capstone): this package is yours to change.
+[package]
+name = "pacer"
+version = "1.1.0"
+edition = "2024"
+license = "MIT"
+description = "How long to wait before the next retry"
+publish = false
+
+# A package of its own, not a member of a workspace above it.
+[workspace]

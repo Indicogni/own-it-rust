@@ -1,0 +1,11 @@
+error[E0277]: the trait bound `Handle: Default` is not satisfied
+  --> tests/ui/c01/fail_no_default.rs:14:13
+   |
+14 |     handle: Handle,
+   |             ^^^^^^ the trait `Default` is not implemented for `Handle`
+   |
+help: consider annotating `Handle` with `#[derive(Default)]`
+   |
+ 9 + #[derive(Default)]
+10 | struct Handle;
+   |

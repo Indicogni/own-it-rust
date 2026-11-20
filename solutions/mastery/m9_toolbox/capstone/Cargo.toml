@@ -1,0 +1,29 @@
+[workspace]
+resolver = "3"
+members = ["tally-core", "tally"]
+# The fuzz project needs nightly and is built only by `cargo fuzz`.
+exclude = ["fuzz"]
+
+[workspace.package]
+version = "0.4.0"
+edition = "2024"
+license = "MIT"
+rust-version = "1.99"
+publish = false
+
+[workspace.dependencies]
+tally-core = { path = "tally-core" }
+insta = "=1.49.0"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+dbg_macro = "deny"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = "symbols"

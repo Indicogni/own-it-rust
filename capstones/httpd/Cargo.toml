@@ -1,0 +1,28 @@
+[package]
+name = "cap_httpd"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+publish = false
+description = "Capstone: an HTTP/1.1 static-file and JSON-echo server with its own bounded thread pool"
+
+# This package stands alone. The empty table keeps Cargo from attaching it to
+# any workspace found in a parent directory.
+[workspace]
+
+# The acceptance tests start this binary as a child process and talk to it
+# over TCP. Cargo gives them its path in `CARGO_BIN_EXE_httpd`, so the name
+# must stay `httpd`. Everything else about the crate layout is your decision:
+# add modules, or add a `src/lib.rs` next to the binary if you want one.
+[[bin]]
+name = "httpd"
+path = "src/main.rs"
+
+# Standard library only (SPEC section 1). Do not add crates.
+[dependencies]
+
+[lints.rust]
+# The whole server can be written in safe Rust. If a stretch goal makes you
+# reach for `unsafe`, change this line on purpose and read RUBRIC.md first.
+unsafe_code = "forbid"

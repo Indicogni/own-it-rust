@@ -1,0 +1,9 @@
+# A very small JSON writer. In this lesson it plays the part of a third-party
+# crate that `swatch` uses only when somebody asks for JSON output.
+# You do not need to edit this package.
+[package]
+name = "tinyjson"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false

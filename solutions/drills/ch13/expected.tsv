@@ -1,0 +1,13 @@
+d01_copy_and_drop.rs	E0184
+d02_explicit_drop.rs	E0040
+d03_implicit_sized.rs	E0277
+d04_move_through_deref.rs	E0507
+d05_from_and_try_from.rs	E0119
+d06_borrow_lookup.rs	ok
+d07_cow_local.rs	E0515
+d08_try_from_unwrap.rs	panic
+d09_derive_clone_field.rs	E0277
+d10_into_inference.rs	E0283
+d11_tail_temporary.rs	ok
+d12_scrutinee_guard.rs	panic
+d13_temporary_borrow.rs	E0716

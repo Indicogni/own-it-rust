@@ -1,0 +1,61 @@
+// Closures as objects: an account is a function that answers messages.
+// Its state lives in the bindings that the inner functions share.
+
+fn make_account(owner, opening) {
+    var balance = opening;
+    let history = [];
+
+    fn record(what, amount) {
+        push(history, what + " " + str(amount));
+    }
+
+    fn deposit(amount) {
+        if amount <= 0 { return "rejected"; }
+        balance = balance + amount;
+        record("deposit", amount);
+        "ok"
+    }
+
+    fn withdraw(amount) {
+        if amount > balance {
+            record("refused", amount);
+            return "insufficient funds";
+        }
+        balance = balance - amount;
+        record("withdraw", amount);
+        "ok"
+    }
+
+    fn(message) {
+        if message == "deposit" { deposit }
+        else if message == "withdraw" { withdraw }
+        else if message == "balance" { fn() { balance } }
+        else if message == "history" { fn() { history } }
+        else if message == "owner" { fn() { owner } }
+        else { fn() { "unknown message: " + message } }
+    }
+}
+
+fn transfer(from, to, amount) {
+    let result = from("withdraw")(amount);
+    if result == "ok" { to("deposit")(amount); }
+    result
+}
+
+fn report(account) {
+    print(account("owner")() + ": " + str(account("balance")()));
+}
+
+let ada = make_account("Ada", 100);
+let ben = make_account("Ben", 20);
+
+print(ada("deposit")(50), ada("deposit")(-5), ben("withdraw")(30));
+print(transfer(ada, ben, 120), transfer(ben, ada, 500));
+report(ada);
+report(ben);
+print(ada("history")());
+print(ben("history")());
+print(ben("close")());
+
+// The two accounts do not share anything.
+print(ada("balance") == ada("balance"), ada("deposit") == ada("deposit"), ada("deposit") == ben("deposit"));

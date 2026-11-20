@@ -1,0 +1,8 @@
+[package]
+name = "label_slug"
+version = "0.3.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+description = "Turns label text into a lower-case, dash-separated slug."
+publish = false

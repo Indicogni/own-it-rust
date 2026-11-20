@@ -1,0 +1,10 @@
+d01_operands_move.rs	E0382
+d02_missing_output.rs	E0046
+d03_eq_with_float.rs	E0277
+d04_neg_unsigned.rs	E0600
+d05_operand_order.rs	E0277
+d06_string_plus.rs	ok
+d07_str_plus_str.rs	E0369
+d08_partialord_needs_eq.rs	E0277
+d09_index_missing_key.rs	panic
+d10_add_assign.rs	E0368

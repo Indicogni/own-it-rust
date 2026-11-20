@@ -1,0 +1,31 @@
+[package]
+name = "cap_nostd_collections"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+publish = false
+description = "Capstone: fixed-capacity collections and a bump arena for programs without a heap"
+
+# This package stands alone. The empty table keeps Cargo from attaching it to
+# any workspace found in a parent directory.
+[workspace]
+
+# The acceptance tests in tests/ use the library through the four names that
+# SPEC.md section 2 fixes. Everything behind those names is yours to design.
+[lib]
+name = "nostd_collections"
+path = "src/lib.rs"
+
+# No dependencies, and none are needed: the library uses `core` only. The
+# tests run on your own computer and use the standard library.
+[dependencies]
+
+[lints.rust]
+# Edition 2024 already warns; an error here keeps every unsafe operation
+# inside an `unsafe` block with its own SAFETY comment, also inside `unsafe fn`.
+unsafe_op_in_unsafe_fn = "deny"
+
+[lints.clippy]
+# Every `unsafe` block and `unsafe impl` needs a `// SAFETY:` comment.
+undocumented_unsafe_blocks = "warn"

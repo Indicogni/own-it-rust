@@ -1,0 +1,10 @@
+d01_spawn_borrow.rs	E0373
+d02_arc_refcell.rs	E0277
+d03_mutex_moved.rs	E0382
+d04_scoped_two_mut.rs	E0499
+d05_mutex_no_mut.rs	ok
+d06_guard_escape.rs	E0515
+d07_static_cell.rs	E0277
+d08_condvar_guard.rs	E0382
+d09_poisoned_read.rs	panic
+d10_send_after_drop.rs	panic

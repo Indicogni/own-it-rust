@@ -1,0 +1,9 @@
+# The lab's checker. You do not need to edit this package.
+[package]
+name = "lab_check"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+description = "Checks the shape of the label_lab workspace: files and manifests."
+publish = false

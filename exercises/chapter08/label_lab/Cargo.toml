@@ -1,0 +1,9 @@
+# Chapter 8 lab: a small workspace that you finish step by step.
+# Start with README.md in this directory.
+
+[workspace]
+members = ["label_core", "label_slug", "label_cli", "lab_check"]
+resolver = "3"
+
+# Step 5 (workspace inheritance) adds three tables below this line:
+# [workspace.package], [workspace.dependencies] and [workspace.lints.rust].

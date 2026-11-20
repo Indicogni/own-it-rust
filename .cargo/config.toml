@@ -1,0 +1,9 @@
+# Course commands. They belong to the root package: run them from the
+# repository root or from any directory of the root package (exercises/,
+# drills/, solutions/, ...). The coach finds the repository root by itself.
+# Inside a standalone package (project/, ecosystem/, mastery/*, capstones/*,
+# checkpoints/*) Cargo looks for the coach in that package and fails; change
+# to the repository root first.
+[alias]
+drill = "run --quiet --example coach -- drill"
+progress = "run --quiet --example coach -- progress"

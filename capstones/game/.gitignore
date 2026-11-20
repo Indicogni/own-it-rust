@@ -1,0 +1,5 @@
+# Screenshots and recordings made while playing.
+*.ppm
+*.png
+shots/
+/target/

@@ -1,0 +1,10 @@
+d01_poll_needs_pin.rs	E0599
+d02_pin_new_async_block.rs	E0277
+d03_poll_receiver.rs	E0053
+d04_missing_output.rs	E0046
+d05_store_waker.rs	E0308
+d06_move_pinned_box.rs	ok
+d07_ready_twice.rs	panic
+d08_wake_under_borrow.rs	panic
+d09_waker_needs_arc.rs	E0277
+d10_pin_mut_self.rs	E0596

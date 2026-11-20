@@ -1,0 +1,10 @@
+d01_missing_variant.rs	E0004
+d02_refutable_let.rs	E0005
+d03_binding_not_constant.rs	panic
+d04_or_pattern_binding.rs	E0408
+d05_move_out_of_ref.rs	E0507
+d06_recursive_size.rs	E0072
+d07_match_ergonomics.rs	ok
+d08_match_moves.rs	E0382
+d09_array_length.rs	E0527
+d10_guard_exhaustive.rs	E0004

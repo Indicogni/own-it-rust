@@ -1,0 +1,10 @@
+d01_closure_as_callback.rs	E0308
+d02_status_match.rs	E0004
+d03_out_param_uninit.rs	E0381
+d04_handle_not_send.rs	E0277
+d05_peek_then_put.rs	E0502
+d06_into_raw_drops.rs	panic
+d07_repr_c_padding.rs	panic
+d08_panic_in_extern_c.rs	panic
+d09_option_fn_is_nullable.rs	ok
+d10_duplicate_symbol.rs	error

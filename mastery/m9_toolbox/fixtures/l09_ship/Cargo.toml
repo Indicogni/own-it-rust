@@ -1,0 +1,14 @@
+# Lesson 09 fixture: the crate `shipit`, about to have its first release. You edit
+# this file and `.github/workflows/ci.yml`, and you create `deny.toml` and
+# `.cargo/config.toml`.
+[package]
+name = "shipit"
+version = "1.0.0"
+edition = "2024"
+rust-version = "1.85"
+license = "MIT"
+# Keeps anyone from publishing this exercise by accident. A real crate removes
+# this line (or lists its registry) when it is ready.
+publish = false
+
+[workspace]

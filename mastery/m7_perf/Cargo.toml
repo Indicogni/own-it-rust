@@ -1,0 +1,66 @@
+# Mastery module M7: performance engineering.
+# A standalone package: not a member of the course's root package, so the
+# chapter checks never download or build criterion.
+[package]
+name = "m7_perf"
+description = "Mastery module M7: performance engineering with counted budgets"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+publish = false
+
+[workspace]
+
+[lib]
+# Without this line, `cargo bench` would also start the unit tests of the
+# library in benchmark mode, and their harness rejects criterion's options.
+bench = false
+
+# The lessons use the standard library only.
+[dependencies]
+
+[dev-dependencies]
+# The benchmark harness. Pinned with "=" so that everyone gets the same
+# harness. The defaults would add plotters (charts) and rayon; the lessons
+# read the numbers in the terminal, so only the `cargo bench` support is on.
+criterion = { version = "=0.8.2", default-features = false, features = ["cargo_bench_support"] }
+
+# Every benchmark is its own program with criterion's `main`, so the default
+# test harness is off (`harness = false`).
+[[bench]]
+name = "l01_black_box"
+harness = false
+
+[[bench]]
+name = "l04_layout"
+harness = false
+
+[[bench]]
+name = "l05_traversal"
+harness = false
+
+[[bench]]
+name = "l08_capstone"
+harness = false
+
+[lints.rust]
+# The only `unsafe` in this module is the counting allocator in
+# `src/support.rs`, which opts back in with a comment that says why.
+unsafe_code = "deny"
+unsafe_op_in_unsafe_fn = "deny"
+
+[lints.clippy]
+dbg_macro = "warn"
+undocumented_unsafe_blocks = "warn"
+
+# Release builds keep line tables, so that a profiler can name functions and
+# lines. This does not change the generated machine code.
+[profile.release]
+debug = "line-tables-only"
+
+# `cargo build --profile profiling`: release speed with full debug info, for
+# the profiling lab in LABS.md.
+[profile.profiling]
+inherits = "release"
+debug = true

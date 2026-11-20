@@ -1,0 +1,53 @@
+From da78c56d35b716a6b592ed112f6f8311c7f4af5f Mon Sep 17 00:00:00 2001
+From: Sam Rivera <sam@contrib.example>
+Date: Tue, 3 Nov 2026 09:48:00 +0000
+Subject: [PATCH 4/4] glob: speed up matching
+
+matches() collected the pattern and the path into two Vec<char> on
+every call. `remove` and `concat` call it once per file, so a big
+workspace paid for two allocations per file. Work on the bytes
+directly. Much faster.
+---
+ crates/tasklane-core/src/glob.rs | 18 ++++++++++--------
+ 1 file changed, 10 insertions(+), 8 deletions(-)
+
+diff --git a/crates/tasklane-core/src/glob.rs b/crates/tasklane-core/src/glob.rs
+index 260f8cd..0e857eb 100644
+--- a/crates/tasklane-core/src/glob.rs
++++ b/crates/tasklane-core/src/glob.rs
+@@ -16,22 +16,24 @@
+ /// assert!(matches("v?.txt", "v2.txt"));
+ /// ```
+ pub fn matches(pattern: &str, path: &str) -> bool {
+-    let pattern: Vec<char> = pattern.chars().collect();
+-    let path: Vec<char> = path.chars().collect();
++    // Bytes instead of chars: nothing is allocated, and every occurence of `/` is
++    // exactly one byte.
++    let pattern = pattern.as_bytes();
++    let path = path.as_bytes();
+     let mut p = 0;
+     let mut t = 0;
+     while p < pattern.len() {
+         match pattern[p] {
+-            '*' => {
+-                // The star takes everything up to the character that follows it in
+-                // the pattern.
++            b'*' => {
++                // The star takes everything up to the byte that follows it in the
++                // pattern.
+                 let stop = pattern.get(p + 1).copied();
+-                while t < path.len() && path[t] != '/' && Some(path[t]) != stop {
++                while t < path.len() && path[t] != b'/' && Some(path[t]) != stop {
+                     t += 1;
+                 }
+             }
+-            '?' => {
+-                if t >= path.len() || path[t] == '/' {
++            b'?' => {
++                if t >= path.len() || path[t] == b'/' {
+                     return false;
+                 }
+                 t += 1;
+-- 
+2.56.0
+

@@ -1,0 +1,120 @@
+//! LESSON 03 — Deref, DerefMut, and Default
+//! Run: cargo test --test chapter13 l03_
+//!
+//! PREDICT before running: first answer `p_predictions` at the bottom (replace each
+//! `guess()` with your answer). Then consider: Does Deref transfer ownership? Can deref
+//! coercion change &Wrapper into &[i32]? Is Default necessarily all zero bytes?
+//!
+//! IMPLEMENT the documented tasks, then keep the tests and add an edge case.
+//! EXPLAIN afterward: When is a transparent wrapper a suitable Deref design? Why should a
+//! domain object avoid surprising deref-based behavior?
+//!
+//! COMPILER / MANUAL LAB (optional; use examples/ch13_scratch.rs):
+//! Try moving a Vec out through *wrapper and inspect the error. Then add a constructor
+//! requiring an invariant and explain why blindly deriving Default could break it.
+//!
+//! TRANSFER: invent a new edge case, predict it, then add a check. A lesson is
+//! complete when its tests, predictions, and explanation are done. The lab is optional.
+
+use std::ops::{Deref, DerefMut};
+#[derive(Debug, PartialEq, Eq)]
+struct Samples(Vec<i32>);
+impl Deref for Samples {
+    type Target = [i32];
+    /// A. Borrow all samples as a slice.
+    fn deref(&self) -> &[i32] {
+        todo!("Task 1: implement the documented contract")
+    }
+}
+impl DerefMut for Samples {
+    /// B. Borrow all samples mutably.
+    fn deref_mut(&mut self) -> &mut [i32] {
+        todo!("Task 2: implement the documented contract")
+    }
+}
+impl Default for Samples {
+    /// C. The meaningful default is an empty sample sequence.
+    fn default() -> Self {
+        todo!("Task 3: implement the documented contract")
+    }
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use practice::guess;
+    fn first(xs: &[i32]) -> Option<i32> {
+        xs.first().copied()
+    }
+    fn sort(xs: &mut [i32]) {
+        xs.sort();
+    }
+    #[test]
+    fn a_deref_coercion_and_method_lookup_work() {
+        let s = Samples(vec![4, 2]);
+        assert_eq!(first(&s), Some(4));
+        assert_eq!(s.len(), 2);
+    }
+    #[test]
+    fn b_mutable_coercion_edits_storage() {
+        let mut s = Samples(vec![3, 1, 2]);
+        sort(&mut s);
+        s[0] = 8;
+        assert_eq!(s.0, [8, 2, 3]);
+    }
+    #[test]
+    fn c_default_has_a_meaningful_empty_state() {
+        assert_eq!(Samples::default(), Samples(vec![]));
+    }
+
+    #[test]
+    fn a_b_deref_views_the_same_storage() {
+        let mut s = Samples(vec![1, 2, 3]);
+        assert_eq!(
+            s.as_ptr(),
+            s.0.as_ptr(),
+            "deref must lend the vector's own buffer, not a copy"
+        );
+        s.reverse();
+        assert_eq!(s.0, [3, 2, 1]);
+        assert_eq!(s.iter().sum::<i32>(), 6);
+    }
+
+    struct Tagged(Vec<i32>);
+    impl Deref for Tagged {
+        type Target = [i32];
+        fn deref(&self) -> &[i32] {
+            &self.0
+        }
+    }
+    impl Tagged {
+        fn len(&self) -> usize {
+            99
+        }
+    }
+
+    /// P. Predict BEFORE running: replace each `guess()` with your answer.
+    #[test]
+    fn p_predictions() {
+        // P1. Tagged has an inherent `len`, and derefs to a slice that has one too.
+        let t = Tagged(vec![4, 5]);
+        let p1: (usize, usize, Option<&i32>) = guess();
+        assert_eq!(
+            p1,
+            (t.len(), (*t).len(), t.first()),
+            "P1: method lookup and Deref (left: your prediction, right: the real values)"
+        );
+
+        // P2. Default values of some standard types.
+        let p2: (u8, Option<u8>, usize, char) = guess();
+        assert_eq!(
+            p2,
+            (
+                u8::default(),
+                Option::<u8>::default(),
+                String::default().capacity(),
+                char::default()
+            ),
+            "P2: Default (left: your prediction, right: the real values)"
+        );
+    }
+}

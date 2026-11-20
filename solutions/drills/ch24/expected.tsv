@@ -1,0 +1,10 @@
+d01_extern_block.rs	error
+d02_unsafe_call.rs	E0133
+d03_safe_foreign_fn.rs	ok
+d04_no_mangle.rs	error
+d05_interior_nul.rs	panic
+d06_str_argument.rs	E0308
+d07_callback_abi.rs	E0308
+d08_string_pointer_cast.rs	E0606
+d09_null_callback.rs	E0308
+d10_return_borrowed_cstr.rs	E0515

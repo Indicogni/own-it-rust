@@ -1,0 +1,5 @@
+---
+source: tally-core/tests/report.rs
+expression: "report(&[])"
+---
+total  0.00

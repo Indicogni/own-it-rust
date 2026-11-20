@@ -1,0 +1,508 @@
+//! LESSON 08 — Supply chain and policy: lock files, advisories, licences, MSRV
+//! Run: cargo test --manifest-path mastery/m9_toolbox/Cargo.toml l08_
+//! Read first: CONCEPTS.md, "Lesson 08 · Supply chain and policy".
+//!
+//! PREDICT before running: first answer `p_predictions` at the bottom (replace each
+//! `guess()` with your answer). Then consider: your manifest says `serde = "1.0.100"`.
+//! Which versions may Cargo pick, and what decides which one you get?
+//! IMPLEMENT tasks A to C below (they are small versions of what `cargo tree -d`,
+//! `cargo audit` and the resolver do), then tasks D and E in `fixtures/l08_policy/`.
+//! Preserve the tests and add an edge case.
+//! EXPLAIN afterward: Explain what `Cargo.lock` protects you from, what it does not
+//! protect you from, and who decides when it changes.
+//! JUDGMENT: Commit `Cargo.lock`, build with `--locked` in CI, and let a tool, not
+//! a person, compare the locked versions with the advisory database every day.
+
+use semver::{Version, VersionReq};
+
+/// One `[[package]]` entry of a `Cargo.lock`.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Locked {
+    pub name: String,
+    pub version: Version,
+}
+
+/// A. Reads the packages from the text of a `Cargo.lock` (it is a TOML file with
+/// one `[[package]]` table per package). Returns them sorted by name, then version.
+/// Text that is not a lock file gives an empty list.
+pub fn locked_packages(lock: &str) -> Vec<Locked> {
+    let Ok(document) = toml::from_str::<toml::Table>(lock) else {
+        return Vec::new();
+    };
+    let mut packages: Vec<Locked> = document
+        .get("package")
+        .and_then(toml::Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(|entry| {
+            let name = entry.get("name")?.as_str()?.to_owned();
+            let version = Version::parse(entry.get("version")?.as_str()?).ok()?;
+            Some(Locked { name, version })
+        })
+        .collect();
+    packages.sort();
+    packages
+}
+
+/// A. The packages that are locked in more than one version, as
+/// `(name, versions in ascending order)`, sorted by name. This is the information
+/// `cargo tree --duplicates` gives you.
+///
+/// Versions are compared as versions, not as text: 0.9.0 comes before 0.10.0.
+pub fn duplicates(lock: &str) -> Vec<(String, Vec<Version>)> {
+    let mut groups: Vec<(String, Vec<Version>)> = Vec::new();
+    // `locked_packages` is sorted by name and then by version, so equal names are
+    // neighbours and their versions are already ascending.
+    for package in locked_packages(lock) {
+        match groups.last_mut() {
+            Some((name, versions)) if *name == package.name => {
+                if versions.last() != Some(&package.version) {
+                    versions.push(package.version);
+                }
+            }
+            _ => groups.push((package.name, vec![package.version])),
+        }
+    }
+    groups.retain(|(_, versions)| versions.len() > 1);
+    groups
+}
+
+/// A security advisory, in the shape the RustSec advisory database uses.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Advisory {
+    /// For example `"RUSTSEC-2026-0001"`.
+    pub id: &'static str,
+    /// The affected crate.
+    pub package: &'static str,
+    /// Version requirements of the releases that contain the fix, for example
+    /// `[">=1.4.2", ">=1.3.9, <1.4.0"]`. Empty if there is no fixed release.
+    pub patched: &'static [&'static str],
+    /// Version requirements of releases that never had the problem.
+    pub unaffected: &'static [&'static str],
+}
+
+/// B. Which locked packages does an advisory apply to? Returns `(advisory id,
+/// package name, locked version)`, sorted.
+///
+/// A locked version is vulnerable if the advisory names its package and the version
+/// matches none of the `patched` and none of the `unaffected` requirements. (So an
+/// advisory without any requirement applies to every version.) A requirement that
+/// does not parse is treated as matching nothing: when in doubt, report.
+pub fn vulnerable(lock: &str, advisories: &[Advisory]) -> Vec<(String, String, Version)> {
+    let matches = |requirements: &[&str], version: &Version| {
+        requirements
+            .iter()
+            .filter_map(|text| VersionReq::parse(text).ok())
+            .any(|requirement| requirement.matches(version))
+    };
+    let mut findings = Vec::new();
+    for package in locked_packages(lock) {
+        for advisory in advisories.iter().filter(|a| a.package == package.name) {
+            let safe = matches(advisory.patched, &package.version)
+                || matches(advisory.unaffected, &package.version);
+            if !safe {
+                findings.push((
+                    advisory.id.to_owned(),
+                    package.name.clone(),
+                    package.version.clone(),
+                ));
+            }
+        }
+    }
+    findings.sort();
+    findings
+}
+
+/// Which matching version to take.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Pick {
+    /// What Cargo does by default: the newest version that matches.
+    Highest,
+    /// What `-Z minimal-versions` does: the oldest version that matches. Used to
+    /// test that the lower bounds in a manifest are honest.
+    Lowest,
+}
+
+/// C. Chooses one of the `available` versions for the requirement `req`, written as
+/// in a manifest (`"1.2"`, `"^0.3.1"`, `"~1.4"`, `">=1, <3"`, `"=2.0.0"`).
+/// `None` if the requirement does not parse or nothing matches. Entries of
+/// `available` that are not versions are skipped.
+pub fn resolve(req: &str, available: &[&str], pick: Pick) -> Option<Version> {
+    let requirement = VersionReq::parse(req).ok()?;
+    let candidates = available
+        .iter()
+        .filter_map(|text| Version::parse(text).ok())
+        .filter(|version| requirement.matches(version));
+    match pick {
+        Pick::Highest => candidates.max(),
+        Pick::Lowest => candidates.min(),
+    }
+}
+
+// D. Write `fixtures/l08_policy/deny.toml`, a cargo-deny policy:
+//
+//    - [advisories]: yanked crates are denied.
+//    - [licenses]: an `allow` list that contains MIT and Apache-2.0, and no licence
+//      of the GPL family (this project ships closed-source binaries).
+//    - [bans]: more than one version of a crate is denied; wildcard requirements
+//      (`"*"`) are denied; the crate `openssl` is banned, with a reason.
+//    - [sources]: unknown registries and unknown git repositories are denied.
+//
+//    The test checks the file's content. Lab 8.2 in LABS.md runs the real
+//    `cargo deny check` with your file on this package's own dependency graph.
+//
+// E. `fixtures/l08_policy` promises `rust-version = "1.85"`, but its code uses a
+//    standard-library function that is newer. Find it with Clippy and replace it,
+//    without changing `rust-version` and without changing behaviour.
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::guess;
+    use crate::support::{self, Value, cargo, fixture, list_at, text_at};
+
+    const LOCK: &str = r#"
+# This file is automatically @generated by Cargo.
+version = 4
+
+[[package]]
+name = "app"
+version = "0.1.0"
+dependencies = ["bitflags 1.3.2", "bitflags 2.13.2", "itoa", "syn 2.0.117", "syn 3.0.10"]
+
+[[package]]
+name = "syn"
+version = "3.0.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "bitflags"
+version = "2.13.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "itoa"
+version = "1.0.19"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "syn"
+version = "2.0.117"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "bitflags"
+version = "1.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "windows-sys"
+version = "0.9.0"
+
+[[package]]
+name = "windows-sys"
+version = "0.10.0"
+"#;
+
+    fn v(text: &str) -> Version {
+        Version::parse(text).unwrap()
+    }
+
+    #[test]
+    fn a_reads_packages_sorted() {
+        let packages = locked_packages(LOCK);
+        let names: Vec<String> = packages
+            .iter()
+            .map(|p| format!("{} {}", p.name, p.version))
+            .collect();
+        assert_eq!(
+            names,
+            [
+                "app 0.1.0",
+                "bitflags 1.3.2",
+                "bitflags 2.13.2",
+                "itoa 1.0.19",
+                "syn 2.0.117",
+                "syn 3.0.10",
+                "windows-sys 0.9.0",
+                "windows-sys 0.10.0",
+            ],
+            "sorted by name, then by version (as versions, not as text)"
+        );
+        assert_eq!(locked_packages("this is not a lock file"), []);
+        assert_eq!(locked_packages(""), []);
+        assert_eq!(locked_packages("version = 4\n"), []);
+    }
+
+    #[test]
+    fn a_reads_this_package_s_own_lock_file() {
+        let text = support::read(&support::package_root().join("Cargo.lock"));
+        let packages = locked_packages(&text);
+        assert!(
+            packages.iter().any(|p| p.name == "m9_toolbox"),
+            "the package itself is in its lock file"
+        );
+        assert!(
+            packages
+                .iter()
+                .any(|p| p.name == "toml" && p.version == v("1.2.1+spec-1.1.0")),
+            "build metadata after `+` is part of the locked version"
+        );
+        assert_eq!(
+            duplicates(&text),
+            [],
+            "this package's graph has no crate in two versions"
+        );
+    }
+
+    #[test]
+    fn a_duplicates_lists_crates_with_several_versions() {
+        assert_eq!(
+            duplicates(LOCK),
+            [
+                ("bitflags".to_owned(), vec![v("1.3.2"), v("2.13.2")]),
+                ("syn".to_owned(), vec![v("2.0.117"), v("3.0.10")]),
+                ("windows-sys".to_owned(), vec![v("0.9.0"), v("0.10.0")]),
+            ],
+            "0.9.0 is older than 0.10.0: compare versions, not strings"
+        );
+        assert_eq!(duplicates(""), []);
+    }
+
+    const ADVISORIES: &[Advisory] = &[
+        // Fixed in 2.13.0, and back-ported to the 1.x line in 1.3.3.
+        Advisory {
+            id: "DEMO-2026-0001",
+            package: "bitflags",
+            patched: &[">=2.13.0", ">=1.3.3, <2.0.0"],
+            unaffected: &[],
+        },
+        // The bug was introduced in 3.0.0 and fixed in 3.0.11.
+        Advisory {
+            id: "DEMO-2026-0002",
+            package: "syn",
+            patched: &[">=3.0.11"],
+            unaffected: &["<3.0.0"],
+        },
+        // Unmaintained: there is no fixed release.
+        Advisory {
+            id: "DEMO-2026-0003",
+            package: "itoa",
+            patched: &[],
+            unaffected: &[],
+        },
+        // A crate we do not use.
+        Advisory {
+            id: "DEMO-2026-0004",
+            package: "left-pad",
+            patched: &[],
+            unaffected: &[],
+        },
+    ];
+
+    #[test]
+    fn b_matches_advisories_against_locked_versions() {
+        let findings: Vec<String> = vulnerable(LOCK, ADVISORIES)
+            .iter()
+            .map(|(id, name, version)| format!("{id} {name} {version}"))
+            .collect();
+        assert_eq!(
+            findings,
+            [
+                "DEMO-2026-0001 bitflags 1.3.2",
+                "DEMO-2026-0002 syn 3.0.10",
+                "DEMO-2026-0003 itoa 1.0.19",
+            ],
+            "bitflags 2.13.2 is patched, syn 2.0.117 never had the bug, \
+             and an advisory without a fixed release applies to every version"
+        );
+        assert_eq!(vulnerable(LOCK, &[]), []);
+        assert_eq!(vulnerable("", ADVISORIES), []);
+    }
+
+    #[test]
+    fn b_an_unreadable_requirement_never_hides_a_finding() {
+        let broken = [Advisory {
+            id: "DEMO-2026-0005",
+            package: "itoa",
+            patched: &["at least 1.0"],
+            unaffected: &[],
+        }];
+        assert_eq!(
+            vulnerable(LOCK, &broken).len(),
+            1,
+            "a requirement that does not parse must count as \"not patched\""
+        );
+    }
+
+    #[test]
+    fn c_resolves_like_cargo_and_like_minimal_versions() {
+        let available = [
+            "0.9.0", "1.0.0", "1.2.0", "1.2.7", "1.9.3", "2.0.0", "2.1.0", "junk",
+        ];
+        assert_eq!(resolve("1.2", &available, Pick::Highest), Some(v("1.9.3")));
+        assert_eq!(resolve("1.2", &available, Pick::Lowest), Some(v("1.2.0")));
+        assert_eq!(resolve("~1.2", &available, Pick::Highest), Some(v("1.2.7")));
+        assert_eq!(
+            resolve("=1.2.0", &available, Pick::Highest),
+            Some(v("1.2.0"))
+        );
+        assert_eq!(
+            resolve(">=1, <3", &available, Pick::Highest),
+            Some(v("2.1.0"))
+        );
+        assert_eq!(resolve("*", &available, Pick::Lowest), Some(v("0.9.0")));
+        assert_eq!(resolve("3", &available, Pick::Highest), None);
+        assert_eq!(resolve("one point two", &available, Pick::Highest), None);
+        assert_eq!(resolve("1", &[], Pick::Lowest), None);
+        // Technique: compared as text, "0.9.0" is greater than "0.10.0".
+        assert_eq!(
+            resolve("0", &["0.9.0", "0.10.0"], Pick::Highest),
+            Some(v("0.10.0")),
+            "the requirement `0` means >=0.0.0, <1.0.0, and 0.10.0 is the newest"
+        );
+        assert_eq!(
+            resolve("0.9", &["0.9.0", "0.9.4", "0.10.0"], Pick::Highest),
+            Some(v("0.9.4")),
+            "below 1.0 the minor number is the breaking one: `0.9` excludes 0.10.0"
+        );
+        assert_eq!(
+            resolve(">=0.9", &["0.9.0", "0.10.0"], Pick::Highest),
+            Some(v("0.10.0")),
+            "0.10.0 is newer than 0.9.0"
+        );
+    }
+
+    #[test]
+    fn d_deny_policy() {
+        let policy = support::toml(&fixture("l08_policy").join("deny.toml"));
+        assert_eq!(
+            text_at(&policy, "/advisories/yanked"),
+            Some("deny"),
+            "[advisories] must deny yanked crates"
+        );
+        let allowed = list_at(&policy, "/licenses/allow");
+        for licence in ["MIT", "Apache-2.0"] {
+            assert!(
+                allowed.iter().any(|l| l == licence),
+                "[licenses] allow must contain {licence}; found {allowed:?}"
+            );
+        }
+        assert!(
+            !allowed.iter().any(|l| l.contains("GPL")),
+            "this project must not accept GPL-family licences; found {allowed:?}"
+        );
+        assert_eq!(
+            text_at(&policy, "/bans/multiple-versions"),
+            Some("deny"),
+            "[bans] must deny a crate in several versions"
+        );
+        assert_eq!(
+            text_at(&policy, "/bans/wildcards"),
+            Some("deny"),
+            "[bans] must deny `*` requirements"
+        );
+        let banned = policy
+            .pointer("/bans/deny")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default();
+        let openssl = banned
+            .iter()
+            .find(|entry| {
+                text_at(entry, "/crate") == Some("openssl") || entry.as_str() == Some("openssl")
+            })
+            .expect("[bans] deny must list the crate `openssl`");
+        assert!(
+            text_at(openssl, "/reason").is_some_and(|reason| reason.len() >= 10),
+            "say why openssl is banned: the next person who hits the ban needs to know"
+        );
+        assert_eq!(text_at(&policy, "/sources/unknown-registry"), Some("deny"));
+        assert_eq!(text_at(&policy, "/sources/unknown-git"), Some("deny"));
+    }
+
+    #[test]
+    fn e_code_keeps_the_msrv_promise() {
+        let krate = fixture("l08_policy");
+        let manifest = support::toml(&krate.join("Cargo.toml"));
+        assert_eq!(
+            text_at(&manifest, "/package/rust-version"),
+            Some("1.85"),
+            "do not raise `rust-version`: users on Rust 1.85 were promised support"
+        );
+        let clippy = cargo(
+            &krate,
+            &["clippy", "--all-targets", "--message-format=json"],
+        );
+        let too_new: Vec<String> = clippy
+            .diagnostics("warning")
+            .into_iter()
+            .chain(clippy.diagnostics("error"))
+            .filter(|d| d.code == "clippy::incompatible_msrv")
+            .map(|d| d.message)
+            .collect();
+        assert!(
+            too_new.is_empty(),
+            "the code uses something newer than its `rust-version`: {too_new:?}"
+        );
+        let source = support::read(&krate.join("src/lib.rs"));
+        assert!(
+            !source.contains("incompatible_msrv"),
+            "silencing the lint does not make the code build on Rust 1.85"
+        );
+        cargo(&krate, &["test", "-q"]).expect_ok("the fixture's own tests must still pass");
+    }
+
+    /// P. Predict BEFORE running: replace each `guess()` with your answer.
+    ///
+    /// Version requirements as Cargo reads them. `matches(req, version)`:
+    #[test]
+    fn p_predictions() {
+        let matches =
+            |req: &str, version: &str| VersionReq::parse(req).unwrap().matches(&v(version));
+
+        // P1. A manifest says `serde = "1.0.100"`. Is 1.9.0 acceptable?
+        let p1: bool = true;
+        assert_eq!(
+            p1,
+            matches("1.0.100", "1.9.0"),
+            "P1: a bare version is a caret requirement: a lower bound, not a pin"
+        );
+
+        // P2. A manifest says `rand = "0.8.5"`. Is 0.9.0 acceptable?
+        let p2: bool = false;
+        assert_eq!(
+            p2,
+            matches("0.8.5", "0.9.0"),
+            "P2: below 1.0, the minor number is the breaking one"
+        );
+
+        // P3. A manifest says `log = "~0.4"`. Is 0.4.99 acceptable?
+        let p3: bool = true;
+        assert_eq!(
+            p3,
+            matches("~0.4", "0.4.99"),
+            "P3: tilde keeps the minor number"
+        );
+
+        // P4. A manifest says `tokio = "1"`. Is the pre-release 1.60.0-rc.1 acceptable?
+        let p4: bool = false;
+        assert_eq!(
+            p4,
+            matches("1", "1.60.0-rc.1"),
+            "P4: pre-releases are only chosen when the requirement itself names one"
+        );
+
+        // P5. With `[">=1.3.3, <2.0.0"]` as a requirement, how many of these four
+        // versions match?  1.3.2  1.3.3  1.9.0  2.0.0
+        let p5: usize = 2;
+        assert_eq!(
+            p5,
+            ["1.3.2", "1.3.3", "1.9.0", "2.0.0"]
+                .iter()
+                .filter(|version| matches(">=1.3.3, <2.0.0", version))
+                .count(),
+            "P5: the comma means \"and\""
+        );
+    }
+}

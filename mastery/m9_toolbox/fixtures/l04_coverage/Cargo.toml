@@ -1,0 +1,8 @@
+# Lesson 04 labs (cargo-llvm-cov, cargo-mutants). See LABS.md.
+[package]
+name = "shipping"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace]

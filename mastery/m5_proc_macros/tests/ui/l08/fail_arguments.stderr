@@ -1,0 +1,23 @@
+error: unknown `builder` argument: expected `default`, `default = expr` or `into`
+ --> tests/ui/l08/fail_arguments.rs:9:15
+  |
+9 |     #[builder(defualt, into)]
+  |               ^^^^^^^
+
+error: unknown `builder` argument: expected `default`, `default = expr` or `into`
+  --> tests/ui/l08/fail_arguments.rs:11:28
+   |
+11 |     #[builder(default = 1, each = "x", default)]
+   |                            ^^^^
+
+error: duplicate `default` argument
+  --> tests/ui/l08/fail_arguments.rs:11:40
+   |
+11 |     #[builder(default = 1, each = "x", default)]
+   |                                        ^^^^^^^
+
+error: duplicate `into` argument
+  --> tests/ui/l08/fail_arguments.rs:13:15
+   |
+13 |     #[builder(into)]
+   |               ^^^^

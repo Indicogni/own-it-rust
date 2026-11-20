@@ -1,0 +1,10 @@
+d01_define_before_use.rs	error
+d02_caller_local.rs	E0425
+d03_double_evaluation.rs	panic
+d04_expr_grouping.rs	ok
+d05_trailing_comma.rs	error
+d06_crate_path.rs	E0425
+d07_typed_expansion.rs	E0308
+d08_macro_local.rs	E0425
+d09_export_location.rs	E0433
+d10_display_leaf.rs	E0277

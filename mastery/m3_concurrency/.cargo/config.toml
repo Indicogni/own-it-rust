@@ -1,0 +1,14 @@
+# `cargo model l02_` runs the loom model tests of lesson 02.
+#
+# The alias does the same as
+#     RUSTFLAGS="--cfg loom" cargo test --release --lib l02_
+# but it works in every shell, and it builds into target/loom so that switching
+# between normal tests and model tests does not rebuild everything each time.
+#
+# The flag is given as `target.'cfg(all())'.rustflags` (a target setting that
+# matches every target) and not as `build.rustflags`, because Cargo ignores
+# `build.rustflags` when your own Cargo configuration sets flags for your
+# target, for example to choose a linker. Only the environment variable
+# RUSTFLAGS still overrides it; README.md says what to do in that case.
+[alias]
+model = ["test", "--release", "--lib", "--target-dir", "target/loom", "--config", "target.'cfg(all())'.rustflags=['--cfg', 'loom']"]

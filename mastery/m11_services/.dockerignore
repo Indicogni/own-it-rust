@@ -1,0 +1,7 @@
+# Keep the build context small and free of local state.
+target/
+**/target/
+*.db
+*.db-shm
+*.db-wal
+.git/

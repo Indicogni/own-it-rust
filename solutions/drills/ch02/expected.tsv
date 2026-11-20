@@ -1,0 +1,10 @@
+d01_push_without_mut.rs	E0596
+d02_if_without_else.rs	E0317
+d03_float_times_integer.rs	E0277
+d04_block_value.rs	ok
+d05_str_for_string.rs	E0308
+d06_range_one_too_far.rs	panic
+d07_missing_match_arm.rs	E0004
+d08_parse_gives_result.rs	E0308
+d09_compare_without_derive.rs	E0369
+d10_left_its_block.rs	E0425

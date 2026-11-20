@@ -1,0 +1,30 @@
+[package]
+name = "cap_kernel"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+publish = false
+description = "Capstone: a small bare-metal kernel for the QEMU virt machine on AArch64"
+
+# This directory is its own workspace, so Cargo never attaches it to a
+# workspace found in a parent directory.
+#
+#   .        this package: the acceptance tests and the QEMU test harness (host)
+#   kcore/   the hardware-independent kernel library (host and bare metal)
+#   kernel/  the bare-metal binary. It is NOT a member: it only builds for
+#            aarch64-unknown-none, and the QEMU tests build it for you.
+[workspace]
+members = ["kcore"]
+exclude = ["kernel"]
+# Plain `cargo test` and `cargo clippy` cover this package and `kcore`.
+default-members = [".", "kcore"]
+
+[lib]
+name = "harness"
+path = "harness/lib.rs"
+
+[dependencies]
+
+[dev-dependencies]
+kcore = { path = "kcore" }

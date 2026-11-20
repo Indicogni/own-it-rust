@@ -1,0 +1,27 @@
+[package]
+name = "cap_interpreter"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+publish = false
+description = "Capstone: Tansy, an interpreter for a small original scripting language"
+default-run = "tansy"
+
+# This package stands alone. The empty table keeps Cargo from attaching it to
+# any workspace found in a parent directory.
+[workspace]
+
+# The acceptance tests in tests/ only ever run the binary. The library is
+# there for you: put the interpreter in it (in as many modules as you like)
+# and keep src/main.rs small, or ignore it and build everything in the binary.
+[lib]
+name = "tansy"
+path = "src/lib.rs"
+
+[[bin]]
+name = "tansy"
+path = "src/main.rs"
+
+# No dependencies: the standard library is enough for this project.
+[dependencies]

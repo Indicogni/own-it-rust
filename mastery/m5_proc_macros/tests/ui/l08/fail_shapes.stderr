@@ -1,0 +1,17 @@
+error: `Builder` needs a struct with named fields
+ --> tests/ui/l08/fail_shapes.rs:8:8
+  |
+8 | struct Pair(u8, u8);
+  |        ^^^^
+
+error: `Builder` needs a struct with named fields
+  --> tests/ui/l08/fail_shapes.rs:11:8
+   |
+11 | struct Unit;
+   |        ^^^^
+
+error: `Builder` needs a struct with named fields
+  --> tests/ui/l08/fail_shapes.rs:14:6
+   |
+14 | enum Level {
+   |      ^^^^^

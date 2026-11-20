@@ -1,0 +1,10 @@
+---
+source: src/l04_testing.rs
+expression: "redact(&log, scratch.path())"
+---
+running 3 checks in [ROOT]/cases
+check parse ... ok ([TIME])
+check render ... ok ([TIME])
+check search ... ok ([TIME])
+wrote [ROOT]/report.txt in 3 steps
+finished in [TIME]; 3 checks, 0 failures

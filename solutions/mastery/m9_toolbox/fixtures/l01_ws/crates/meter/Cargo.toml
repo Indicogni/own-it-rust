@@ -1,0 +1,18 @@
+[package]
+name = "meter"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[features]
+default = []
+# `dep:` keeps the optional dependency from becoming a feature of its own.
+json = ["dep:tinyjson"]
+
+[dependencies]
+tinyjson = { workspace = true, optional = true }
+
+[lints]
+workspace = true

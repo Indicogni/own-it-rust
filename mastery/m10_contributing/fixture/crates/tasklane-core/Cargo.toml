@@ -1,0 +1,11 @@
+[package]
+name = "tasklane-core"
+description = "Parser, planner and runner of tasklane."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+tasklane-plugin.workspace = true

@@ -1,0 +1,34 @@
+From c33d941c86aea6f1ef4eb911a3c61b5e13bbf49c Mon Sep 17 00:00:00 2001
+From: Sam Rivera <sam@contrib.example>
+Date: Mon, 2 Nov 2026 18:40:00 +0000
+Subject: [PATCH 2/4] tests: make the summary test reliable
+
+summary_names_failed_tasks failed about every second run on my machine
+and in CI. The test compared the whole line, so it depended on the
+order of the failed tasks. Check for each task on its own instead.
+
+Fixes #30
+---
+ crates/tasklane-core/tests/report.rs | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/crates/tasklane-core/tests/report.rs b/crates/tasklane-core/tests/report.rs
+index 1713495..9fcab0f 100644
+--- a/crates/tasklane-core/tests/report.rs
++++ b/crates/tasklane-core/tests/report.rs
+@@ -25,8 +25,8 @@ fn summary_names_failed_tasks() {
+                   task test\n  step fail 2 tests failed\n\
+                   task docs\n  step echo ok\n\
+                   task ci : lint test docs\n";
+-    assert_eq!(
+-        summary(source, "ci"),
+-        "1 done, 2 failed, 1 skipped; failed: lint (fail: style), test (fail: 2 tests failed)"
+-    );
++    let line = summary(source, "ci");
++    assert!(line.starts_with("1 done, 2 failed, 1 skipped; failed: "));
++    assert!(line.contains("lint (fail: style)"));
++    assert!(line.contains("test (fail: 2 tests failed)"));
+ }
+-- 
+2.56.0
+

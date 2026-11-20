@@ -1,0 +1,21 @@
+# swatch: colours for terminal programs. Lesson 05: this manifest and
+# src/lib.rs are yours to change.
+[package]
+name = "swatch"
+version = "0.3.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+# A package of its own, not a member of a workspace above it.
+[workspace]
+
+[dependencies]
+tinyjson = { path = "../tinyjson", optional = true }
+
+[features]
+default = []
+# Leaves out the table of colour names, for small programs.
+no-names = []
+# 16 bits per channel instead of 8.
+wide = []

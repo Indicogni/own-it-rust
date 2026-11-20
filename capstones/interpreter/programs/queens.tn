@@ -1,0 +1,55 @@
+// The n queens problem: put n queens on a board of n by n squares so that
+// no queen attacks another. `columns[r]` is the column of the queen in row r.
+
+fn is_safe(columns, column) {
+    let row = len(columns);
+    for r in 0..row {
+        let c = columns[r];
+        let distance = row - r;
+        if c == column or c - column == distance or column - c == distance {
+            return false;
+        }
+    }
+    true
+}
+
+// Tries every column for the next row. Calls `found` for each complete
+// board and returns how many there are.
+fn place(n, columns, found) {
+    if len(columns) == n {
+        found(columns);
+        return 1;
+    }
+    var count = 0;
+    for column in 0..n {
+        if is_safe(columns, column) {
+            push(columns, column);
+            count = count + place(n, columns, found);
+            pop(columns);
+        }
+    }
+    count
+}
+
+fn draw(columns) {
+    for column in columns {
+        var line = "";
+        for i in 0..len(columns) {
+            line = line + if i == column { " Q" } else { " ." };
+        }
+        print(line);
+    }
+}
+
+for n in 1..9 {
+    print(n, "queens:", place(n, [], fn(board) { }));
+}
+
+// Keep the first board for six queens. The list that `found` gets is
+// changed again by the search, so a copy is kept: `+` makes a new list.
+var first = nil;
+place(6, [], fn(board) {
+    if first == nil { first = board + []; }
+});
+print("the first board for 6 queens:", first);
+draw(first);

@@ -1,0 +1,30 @@
+error: unknown argument `level`: expected `label = "..."`
+  --> tests/ui/l05/fail_args.rs:11:10
+   |
+11 | #[logged(level = 3)]
+   |          ^^^^^
+
+error: duplicate argument `label`
+  --> tests/ui/l05/fail_args.rs:16:23
+   |
+16 | #[logged(label = "a", label = "b")]
+   |                       ^^^^^
+
+error: expected string literal
+  --> tests/ui/l05/fail_args.rs:21:18
+   |
+21 | #[logged(label = 7)]
+   |                  ^
+
+error[E0308]: mismatched types
+  --> tests/ui/l05/fail_args.rs:28:25
+   |
+28 |     let _text: String = total;
+   |                ------   ^^^^^ expected `String`, found `u32`
+   |                |
+   |                expected due to this
+   |
+help: try using a conversion method
+   |
+28 |     let _text: String = total.to_string();
+   |                              ++++++++++++

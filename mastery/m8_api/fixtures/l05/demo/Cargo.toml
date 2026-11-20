@@ -1,0 +1,4 @@
+# A workspace for the predictions of lesson 05. You do not need to edit it.
+[workspace]
+resolver = "3"
+members = ["lamp", "reader", "stage"]

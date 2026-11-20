@@ -1,0 +1,11 @@
+d01_fnonce_twice.rs	E0382
+d02_capture_conflict.rs	E0502
+d03_last_use.rs	ok
+d04_fn_mutation.rs	E0594
+d05_thread_borrow.rs	E0373
+d06_two_closure_types.rs	E0308
+d07_fnonce_where_fn.rs	E0525
+d08_move_still_fn.rs	ok
+d09_reentrant_callback.rs	panic
+d10_fn_item_capture.rs	E0434
+d11_boxed_borrow.rs	error

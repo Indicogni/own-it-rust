@@ -1,0 +1,35 @@
+# Mastery module M3: concurrency by building the primitives.
+# A standalone package: not a member of the course's root package, so you can
+# work on it (and the chapter checks can run) independently.
+[package]
+name = "m3_concurrency"
+description = "Mastery module M3: concurrency by building the primitives"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+publish = false
+
+[workspace]
+
+# The lessons use the standard library only.
+[dependencies]
+
+# loom is a model checker: it runs a small concurrent test under every
+# interleaving that the memory model allows. It is compiled only when you pass
+# `--cfg loom` (the `cargo model` alias does that), so a normal build never
+# downloads or builds it. The version is pinned with "=" because the model
+# tests depend on exactly what this release can and cannot check.
+[target.'cfg(loom)'.dependencies]
+loom = "=0.7.3"
+
+[lints.rust]
+# Every unsafe operation sits in its own `unsafe` block with a SAFETY comment,
+# also inside an `unsafe fn`.
+unsafe_op_in_unsafe_fn = "deny"
+# `cfg(loom)` is set from the command line, so tell rustc that it exists.
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(loom)'] }
+
+[lints.clippy]
+dbg_macro = "warn"
+undocumented_unsafe_blocks = "warn"

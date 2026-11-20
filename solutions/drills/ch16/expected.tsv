@@ -1,0 +1,10 @@
+d01_push_while_borrowed.rs	E0502
+d02_map_index_assign.rs	E0594
+d03_sort_floats.rs	E0277
+d04_key_without_hash.rs	E0277
+d05_two_mut_indices.rs	E0499
+d06_sort_by_borrowed_key.rs	error
+d07_heap_order.rs	panic
+d08_dedup_unsorted.rs	panic
+d09_contains_str.rs	E0308
+d10_borrowed_lookup.rs	ok

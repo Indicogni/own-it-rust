@@ -1,0 +1,35 @@
+//! A small checksum over 4-byte words.
+
+/// Adds up the input as little-endian 32-bit words, wrapping on overflow. A last
+/// group of fewer than four bytes is padded with zeros.
+pub fn checksum(bytes: &[u8]) -> u32 {
+    // `chunks_exact` has been stable since Rust 1.31; `as_chunks` needs 1.88.
+    let words = bytes.chunks_exact(4);
+    let rest = words.remainder();
+    let mut sum = 0_u32;
+    for word in words {
+        let word: [u8; 4] = word.try_into().expect("chunks_exact(4) yields 4 bytes");
+        sum = sum.wrapping_add(u32::from_le_bytes(word));
+    }
+    if !rest.is_empty() {
+        let mut last = [0_u8; 4];
+        last[..rest.len()].copy_from_slice(rest);
+        sum = sum.wrapping_add(u32::from_le_bytes(last));
+    }
+    sum
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sums_words() {
+        assert_eq!(checksum(&[]), 0);
+        assert_eq!(checksum(&[1, 0, 0, 0, 2, 0, 0, 0]), 3);
+        assert_eq!(checksum(&[0xFF; 4]), u32::MAX);
+        assert_eq!(checksum(&[0xFF, 0xFF, 0xFF, 0xFF, 1, 0, 0, 0]), 0);
+        assert_eq!(checksum(&[1, 0, 0, 0, 5]), 6);
+        assert_eq!(checksum(&[0, 1]), 256);
+    }
+}

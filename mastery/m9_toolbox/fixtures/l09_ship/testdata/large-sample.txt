@@ -1,0 +1,2 @@
+Imagine this file is 40 MB of sample text. crates.io rejects packages over 10 MB,
+and nobody who depends on the crate needs it.

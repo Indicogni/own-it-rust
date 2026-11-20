@@ -1,0 +1,12 @@
+[3 4 + 2 *] = 14
+[1 2 3 4 5 + + + +] = 15
+[100 7 / 100 7 % -] = 12
+[2 3 4 * + 5 -] = 9
+[-8 3 /] = -2
+[  42  ] = 42
+[1 +] fails: not enough operands for +
+[1 0 /] fails: division by zero
+[5 0 %] fails: division by zero
+[1 2] fails: 2 values left over
+[two 2 +] fails: what is two?
+[] fails: nothing to evaluate

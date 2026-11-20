@@ -1,0 +1,11 @@
+[package]
+name = "pinned"
+description = "A user of tasklane 0.4.0. It must keep compiling after every 0.4.x change."
+version = "0.0.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+[dependencies]
+tasklane-core = { path = "../../fixture/crates/tasklane-core" }
+tasklane-plugin = { path = "../../fixture/crates/tasklane-plugin" }

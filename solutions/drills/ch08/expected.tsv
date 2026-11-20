@@ -1,0 +1,11 @@
+d01_private_function.rs	E0603
+d02_private_field_literal.rs	E0451
+d03_unresolved_import.rs	E0432
+d04_const_needs_const_fn.rs	E0015
+d05_static_cell.rs	E0277
+d06_cfg_removed_item.rs	E0425
+d07_cfg_not_type_checked.rs	ok
+d08_reexport_private.rs	E0364
+d09_ambiguous_glob.rs	E0659
+d10_option_env.rs	panic
+d11_private_field_access.rs	E0616

@@ -1,0 +1,328 @@
+name: Course checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+# Least privilege: every job only reads the repository. No job needs a
+# secret except the optional COURSE_FORBIDDEN list in the `checks` job.
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  # A dated nightly keeps the Miri jobs reproducible. Move it forward on
+  # purpose, and check the Miri jobs when you do.
+  MIRI_TOOLCHAIN: nightly-2026-11-20
+
+# The pinned toolchain comes from rust-toolchain.toml. `rustup toolchain
+# install` without a name installs it (rustup 1.28 and newer); older rustup
+# versions install it when `rustup show active-toolchain` runs.
+#
+# Every unit of the course (chapter, project, ecosystem track, mastery
+# module, capstone, checkpoint) is discovered by
+# `scripts/check_solutions.py --list --json`, so a new unit is checked
+# without editing this file. Settings a unit needs (system packages, Miri,
+# loom) live in that script's QUIRKS table.
+#
+# Pinning actions: a tag such as `v6` can be moved by the action's owner, so
+# every `uses:` below names the full commit SHA of a release, with the
+# release as a comment. To move to a newer release, look the SHA up (do not
+# copy one from memory), for example
+#   gh api repos/actions/checkout/git/ref/tags/v6.1.0
+# and, when the result's object type is "tag", follow its URL to the commit.
+
+jobs:
+  plan:
+    name: List the units
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      units: ${{ steps.units.outputs.units }}
+      miri: ${{ steps.units.outputs.miri }}
+      loom: ${{ steps.units.outputs.loom }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+      - id: units
+        run: |
+          python scripts/check_solutions.py --list
+          python scripts/check_solutions.py --list --json > "$RUNNER_TEMP/units.json"
+          python - <<'EOF'
+          import json, os
+          units = json.load(open(os.path.join(os.environ["RUNNER_TEMP"], "units.json")))
+          pick = lambda rows: json.dumps([{"unit": u["unit"], "needs": u["needs"]} for u in rows])
+          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+              out.write("units=%s\n" % pick(units))
+              out.write("miri=%s\n" % pick([u for u in units if u["miri"]]))
+              out.write("loom=%s\n" % pick([u for u in units if u["loom"]]))
+          EOF
+
+  compile:
+    name: Root package, formatting and coach (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        # macOS minutes cost 10x on private repositories, so macOS runs only
+        # once the repository is public. Run the checks on a Mac by hand meanwhile.
+        os: ${{ fromJSON(github.event.repository.private && '["ubuntu-latest","windows-latest"]' || '["ubuntu-latest","macos-latest","windows-latest"]') }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+      - name: Install pinned Rust toolchain
+        run: |
+          rustup toolchain install --no-self-update || rustup show active-toolchain
+          rustc --version
+      - name: Check formatting of the root package and every standalone package
+        run: |
+          cargo fmt --all --check
+          python scripts/check_solutions.py --list --packages | tr -d '\r' | while read -r package; do
+            echo "cargo fmt --check in $package"
+            (cd "$package" && cargo fmt --all --check)
+          done
+          # Nested packages that are not workspace members. (Fixture packages
+          # of mastery modules are left out: some are unformatted on purpose.)
+          (cd mastery/m6_ffi/sys_lab && cargo fmt --check)
+          (cd capstones/kernel/kernel && cargo fmt --check)
+      - name: Lint
+        run: |
+          cargo clippy --locked --offline --all-targets --all-features
+          cargo clippy --manifest-path ecosystem/Cargo.toml --locked --all-targets -- -D warnings
+          cargo clippy --manifest-path project/Cargo.toml --locked --all-targets -- -D warnings
+      - name: Test the support library and the coach
+        run: cargo test --locked --offline --lib --example coach
+      # Unfinished exercises fail on purpose. Compile their tests without running them.
+      - name: Compile core starters and playground in both profiles
+        run: |
+          cargo test --locked --offline --all-targets --all-features --no-run
+          cargo test --locked --offline --release --all-targets --all-features --no-run
+      - name: Code blocks of the ecosystem CONCEPTS.md on the starter
+        run: |
+          cargo test --manifest-path ecosystem/Cargo.toml --locked --doc
+          cargo test --manifest-path ecosystem/Cargo.toml --locked --release --doc
+      # The coach end to end, from a subdirectory: the aliases must find the
+      # repository root, and no starter test may hang or crash the report.
+      # The coach reports such a chapter and still exits with 0 (for a
+      # learner that is a status, not an error), so the report is searched.
+      - name: Run the coach on the starters
+        working-directory: exercises
+        run: |
+          cargo drill
+          cargo progress | tee "$RUNNER_TEMP/progress.txt"
+          if grep -E "crashed|did not finish|does not compile" "$RUNNER_TEMP/progress.txt"; then
+            echo "::error::a starter chapter crashed, hung or does not compile (see the lines above)"
+            exit 1
+          fi
+          cargo progress solution ch04 l01
+          cargo progress solution m1 l01
+
+  checks:
+    name: Starter, link and concept checks (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        # macOS minutes cost 10x on private repositories, so macOS runs only
+        # once the repository is public. Run the checks on a Mac by hand meanwhile.
+        os: ${{ fromJSON(github.event.repository.private && '["ubuntu-latest","windows-latest"]' || '["ubuntu-latest","macos-latest","windows-latest"]') }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+      - name: Install pinned Rust toolchain
+        run: |
+          rustup toolchain install --no-self-update || rustup show active-toolchain
+          rustc --version
+      # Structure of lessons and drills, and no forbidden phrase. The phrases
+      # are kept in the repository secret COURSE_FORBIDDEN, as a
+      # comma-separated list.
+      # The script reports file and line only; it never prints a phrase.
+      - name: Starter structure and forbidden phrases
+        env:
+          COURSE_FORBIDDEN: ${{ secrets.COURSE_FORBIDDEN }}
+        run: python scripts/check_starters.py --strict
+      - name: Relative Markdown links and anchors
+        if: ${{ !cancelled() }}
+        run: python scripts/check_links.py
+      - name: NOTES.md files match their generator
+        if: ${{ !cancelled() }}
+        run: python scripts/make_notes.py --all --check
+      - name: Code blocks of every std-only CONCEPTS.md
+        if: ${{ !cancelled() }}
+        run: python scripts/check_concepts.py
+      - name: Every prediction fails at guess() in the starters
+        if: ${{ !cancelled() }}
+        run: python scripts/check_starters.py --no-phrases --run
+
+  # One job per unit, so a failing unit does not hide the others. Each job
+  # compiles the unchanged starters in both profiles, then lays solutions/
+  # over a copy of the course and runs the unit's tests (debug and release),
+  # clippy and, for chapters, every drill against expected.tsv.
+  solutions:
+    name: Unit ${{ matrix.unit }} (Linux)
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.units) }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      UNIT: ${{ matrix.unit }}
+      # The kernel capstone's QEMU tests skip when QEMU is missing; here a
+      # missing emulator is a failure.
+      KERNEL_REQUIRE_QEMU: "1"
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+      - name: Install pinned Rust toolchain
+        run: |
+          rustup toolchain install --no-self-update || rustup show active-toolchain
+          rustc --version
+      - name: Install QEMU for AArch64
+        if: contains(matrix.needs, 'qemu')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends qemu-system-arm
+          qemu-system-aarch64 --version
+      - name: Install the bare-metal AArch64 target
+        if: contains(matrix.needs, 'aarch64')
+        run: rustup target add aarch64-unknown-none
+      - name: Install the libraries of the game's window feature
+        if: contains(matrix.needs, 'window-libs')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends pkg-config libxkbcommon-dev libwayland-dev libwayland-cursor0
+      - name: Show the C compiler
+        if: contains(matrix.needs, 'c-compiler')
+        run: cc --version
+      - name: Starters compile; solutions pass tests and clippy
+        run: python scripts/check_solutions.py --only "$UNIT" --starters --clippy --strict --work-dir "$RUNNER_TEMP"
+
+  # macOS and Windows: the same checks without clippy, one job per group of
+  # units. The script reports every unit even when an earlier one fails.
+  solutions-other-os:
+    name: Units ${{ matrix.units }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        # macOS only once the repository is public (see above).
+        os: ${{ fromJSON(github.event.repository.private && '["windows-latest"]' || '["macos-latest","windows-latest"]') }}
+        units: [core, "project,ecosystem,checkpoints", mastery, capstones]
+    defaults:
+      run:
+        shell: bash
+    env:
+      UNITS: ${{ matrix.units }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+      - name: Install pinned Rust toolchain
+        run: |
+          rustup toolchain install --no-self-update || rustup show active-toolchain
+          rustc --version
+      # The copy goes to the runner's temp directory, whose path is short;
+      # deep build paths below the user's temp directory can be too long for
+      # the Windows linker.
+      - name: Starters compile; solutions pass their tests
+        run: python scripts/check_solutions.py --only "$UNITS" --starters --strict --work-dir "$RUNNER_TEMP"
+
+  miri:
+    name: Miri, ${{ matrix.unit }}
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.miri) }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      UNIT: ${{ matrix.unit }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+      - name: Install nightly Rust with Miri
+        run: |
+          rustup toolchain install "$MIRI_TOOLCHAIN" --profile minimal --component miri --component rust-src
+          cargo +"$MIRI_TOOLCHAIN" miri setup
+      # The script runs `cargo +$MIRI_TOOLCHAIN miri ...` on the solved copy;
+      # `+toolchain` overrides rust-toolchain.toml for those commands only.
+      # The runs of each unit are listed in scripts/check_solutions.py.
+      - name: Miri on the solved unit
+        run: python scripts/check_solutions.py --only "$UNIT" --checks miri --work-dir "$RUNNER_TEMP"
+
+  loom:
+    name: loom, ${{ matrix.unit }}
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.loom) }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      UNIT: ${{ matrix.unit }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+      - name: Install pinned Rust toolchain
+        run: |
+          rustup toolchain install --no-self-update || rustup show active-toolchain
+          rustc --version
+      # loom tests are compiled with `--cfg loom` and run in release mode.
+      # The module's own alias `cargo model` is what its README teaches, so
+      # the script uses it when the module has one.
+      - name: loom on the solved unit
+        run: python scripts/check_solutions.py --only "$UNIT" --checks loom --work-dir "$RUNNER_TEMP"

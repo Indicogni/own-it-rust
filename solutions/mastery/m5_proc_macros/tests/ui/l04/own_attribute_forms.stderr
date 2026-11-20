@@ -1,0 +1,23 @@
+error: expected attribute arguments in parentheses: #[label(...)]
+  --> tests/ui/l04/own_attribute_forms.rs:11:7
+   |
+11 |     #[label]
+   |       ^^^^^
+
+error: expected parentheses: #[label(...)]
+  --> tests/ui/l04/own_attribute_forms.rs:13:13
+   |
+13 |     #[label = "sq"]
+   |             ^
+
+error: unexpected token
+  --> tests/ui/l04/own_attribute_forms.rs:15:18
+   |
+15 |     #[label("tri", "angle")]
+   |                  ^
+
+error: duplicate label `Line` (variant `Segment` has it too)
+  --> tests/ui/l04/own_attribute_forms.rs:19:5
+   |
+19 |     Line,
+   |     ^^^^

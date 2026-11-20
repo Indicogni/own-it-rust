@@ -1,0 +1,17 @@
+# Lesson 06, task A: the commit message for your fix of issue 14.
+# Lines that start with `#` are ignored, as in git's editor.
+# The rules are in fixture/CONTRIBUTING.md, section "Commit messages".
+vars: keep the character after a lone `$`
+
+expand() dropped the character that follows a `$` when the `$` starts
+neither a variable (`${NAME}`) nor an escape (`$$`). A step argument
+such as `coffee $3` became `coffee $`, so every price in a generated
+file lost its number.
+
+The code took the next character out of the iterator before it knew
+whether that character belonged to the `$`. Look at it first, and take
+it only for `${` and `$$`. A lone `$` now stays as it is and the next
+character is handled by the next round of the loop, as the
+documentation of expand() says.
+
+Fixes #14

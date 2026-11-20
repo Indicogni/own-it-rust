@@ -1,0 +1,8 @@
+# Lesson 02, predictions. Read `src/lib.rs` and `expanded.rs`; do not edit them.
+[package]
+name = "l02_expand"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace]

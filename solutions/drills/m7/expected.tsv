@@ -1,0 +1,10 @@
+d01_reused_buffer.rs	E0597
+d02_declared_order.rs	panic
+d03_whole_chunks.rs	panic
+d04_buffered_target.rs	E0502
+d05_generic_method_object.rs	E0038
+d06_free_options.rs	ok
+d07_skipping_the_check.rs	E0133
+d08_hoisted_check.rs	panic
+d09_two_closures.rs	E0308
+d10_packed_field.rs	E0793

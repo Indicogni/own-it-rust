@@ -1,0 +1,10 @@
+target/
+.idea/
+.DS_Store
+# Your personal drill, review, and redo history.
+.progress/
+# Backups that scripts/make_notes.py keeps before it replaces a workbook.
+NOTES.md.bak*
+# Python caches from the scripts in scripts/.
+__pycache__/
+*.pyc

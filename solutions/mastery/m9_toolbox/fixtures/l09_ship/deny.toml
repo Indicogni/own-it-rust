@@ -1,0 +1,16 @@
+# cargo-deny policy, checked with cargo-deny 0.22. Without this file,
+# `cargo deny check` allows no licence at all.
+[advisories]
+yanked = "deny"
+
+[licenses]
+# This crate has no dependencies yet, so its own licence is the whole list.
+allow = ["MIT"]
+
+[bans]
+multiple-versions = "deny"
+wildcards = "deny"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"

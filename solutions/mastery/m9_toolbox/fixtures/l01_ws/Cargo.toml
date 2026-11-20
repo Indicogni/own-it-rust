@@ -1,0 +1,26 @@
+# Lesson 01 fixture. This is the file you edit most in that lesson.
+[workspace]
+resolver = "3"
+members = ["crates/*", "xtask"]
+# Plain `cargo build` and `cargo test` skip the automation crate.
+default-members = ["crates/*"]
+
+[workspace.package]
+version = "0.3.0"
+edition = "2024"
+license = "MIT"
+rust-version = "1.99"
+publish = false
+
+[workspace.dependencies]
+meter = { path = "crates/meter" }
+tinyjson = { path = "crates/tinyjson" }
+winconsole = { path = "crates/winconsole" }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+# Profiles are read from the workspace root only.
+[profile.release]
+lto = "thin"
+codegen-units = 1

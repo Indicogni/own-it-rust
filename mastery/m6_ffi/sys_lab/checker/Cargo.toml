@@ -1,0 +1,16 @@
+# Lesson 02 lab: this crate checks your `fletch-sys`. Do not edit it.
+[package]
+name = "checker"
+description = "Lesson 02 lab: checks the fletch-sys crate"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+publish = false
+build = "build.rs"
+
+[features]
+wide = ["fletch-sys/wide"]
+
+[dependencies]
+fletch-sys = { path = "../fletch-sys" }

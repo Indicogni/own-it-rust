@@ -1,0 +1,32 @@
+# The procedural macros for lessons 02 to 08 and the code review lesson.
+[package]
+name = "m5_macros"
+description = "Mastery module M5: the procedural macros you write"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+publish = false
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "=1.0.107"
+quote = "=1.0.47"
+# `full` adds the syntax tree for functions and expressions (lessons 05 to 07).
+# The default features already cover what a derive needs.
+syn = { version = "=3.0.10", features = ["full"] }
+
+[dev-dependencies]
+# Only for unit tests: line and column numbers on spans outside the compiler,
+# so that a test can check where an error points.
+proc-macro2 = { version = "=1.0.107", features = ["span-locations"] }
+# Only for unit tests: `Debug` and `PartialEq` on syntax trees, and a visitor.
+syn = { version = "=3.0.10", features = ["full", "extra-traits", "visit"] }
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+dbg_macro = "warn"

@@ -1,0 +1,29 @@
+[package]
+name = "cap_kvstore"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+publish = false
+description = "Capstone: a persistent key-value store server with a write-ahead log, crash recovery and compaction"
+default-run = "kvstore"
+
+# This package stands alone. The empty table keeps Cargo from attaching it to
+# any workspace found in a parent directory.
+[workspace]
+
+# The acceptance tests start the binary `kvstore` and talk to it over TCP.
+# They never call into the library, so everything inside `src/` is yours to
+# design. The library target exists only so that you have a place for
+# modules and unit tests; `src/main.rs` can stay small.
+[lib]
+name = "kvstore"
+path = "src/lib.rs"
+
+[[bin]]
+name = "kvstore"
+path = "src/main.rs"
+
+# The standard library only. The stretch goals in SPEC.md say when a
+# dependency becomes reasonable.
+[dependencies]

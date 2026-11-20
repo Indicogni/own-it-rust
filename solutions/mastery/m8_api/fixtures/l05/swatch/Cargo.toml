@@ -1,0 +1,29 @@
+# swatch: colours for terminal programs. Lesson 05: this manifest and
+# src/lib.rs are yours to change.
+[package]
+name = "swatch"
+# 0.4.0, not 0.3.1: this release removes the features `no-names` and `tinyjson`
+# and changes what `wide` does. Before 1.0.0 the second number is the one that
+# tells Cargo "not compatible".
+version = "0.4.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+# A package of its own, not a member of a workspace above it.
+[workspace]
+
+[dependencies]
+tinyjson = { path = "../tinyjson", optional = true }
+
+[features]
+# What most users want. A small program opts out with `default-features = false`.
+default = ["names"]
+# The table of colour names: `Color::named`.
+names = []
+# JSON output: `to_json`. `dep:` turns the optional dependency on without
+# making its crate name a feature of this package, so the JSON crate can be
+# replaced later without removing a feature.
+json = ["dep:tinyjson"]
+# A second colour type with 16 bits per channel: `Color16`.
+wide = []

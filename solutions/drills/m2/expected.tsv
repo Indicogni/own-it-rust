@@ -1,0 +1,10 @@
+d01_cell_get_needs_copy.rs	E0599
+d02_static_needs_sync.rs	E0277
+d03_unsafe_fn_body.rs	ok
+d04_move_out_of_drop.rs	E0509
+d05_closure_captures_field.rs	E0277
+d06_drain_keeps_the_borrow.rs	E0499
+d07_const_needs_drop_check.rs	E0080
+d08_zero_sized_never_allocates.rs	ok
+d09_get_mut_with_weak.rs	panic
+d10_cell_in_a_const.rs	panic

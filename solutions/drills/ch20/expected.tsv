@@ -1,0 +1,11 @@
+d01_await_outside_async.rs	E0728
+d02_missing_await.rs	E0369
+d03_future_borrows_local.rs	E0373
+d04_vec_of_async_blocks.rs	E0308
+d05_rc_across_await.rs	error
+d06_never_polled.rs	ok
+d07_poll_after_ready.rs	panic
+d08_dyn_async_trait.rs	E0038
+d09_async_move.rs	E0382
+d10_fnmut_future.rs	error
+d11_drop_before_await.rs	error

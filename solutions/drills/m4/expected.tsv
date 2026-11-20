@@ -1,0 +1,10 @@
+d01_poll_inline_field.rs	E0599
+d02_pin_new_needs_unpin.rs	E0277
+d03_spawn_needs_send.rs	error
+d04_spawn_borrows_local.rs	E0373
+d05_heap_of_wakers.rs	E0277
+d06_latest_timer_first.rs	panic
+d07_safe_fns_in_a_vtable.rs	ok
+d08_future_borrows_self.rs	E0505
+d09_cancelled_read_loses_bytes.rs	panic
+d10_pending_without_a_waker.rs	panic

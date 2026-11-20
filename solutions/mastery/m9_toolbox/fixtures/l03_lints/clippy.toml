@@ -1,0 +1,3 @@
+disallowed-methods = [
+    { path = "std::process::exit", reason = "return an error to `main` instead; exit skips destructors" },
+]

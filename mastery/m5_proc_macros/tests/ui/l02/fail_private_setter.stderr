@@ -1,0 +1,8 @@
+error[E0624]: method `set_balance` is private
+  --> tests/ui/l02/fail_private_setter.rs:18:13
+   |
+ 8 |     #[derive(Setters, Default)]
+   |              ------- private method defined here
+...
+18 |     account.set_balance(1_000_000);
+   |             ^^^^^^^^^^^ private method

@@ -1,0 +1,23 @@
+[package]
+name = "label_core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Validated labels: the library half of the chapter 8 lab."
+publish = false
+
+[features]
+# Step 6: make `slug` switch on the optional dependency `label_slug`.
+# The `dep:` prefix means "the dependency", and stops Cargo from also
+# creating a feature that is named after the dependency.
+slug = ["dep:label_slug"]
+
+[dependencies]
+# Step 6: `label_slug` belongs here, as an OPTIONAL dependency.
+# `optional` is set here, by the crate that uses the dependency; it cannot be
+# inherited from [workspace.dependencies].
+label_slug = { workspace = true, optional = true }
+
+[lints]
+workspace = true

@@ -1,0 +1,32 @@
+# Builds a tiny "site": a header and two pages joined into one file.
+#
+#   tasklane -f examples/site.lane list
+#   tasklane -f examples/site.lane run site --show log,files,summary
+
+set TITLE = My Site
+set OUT = build
+
+task clean
+  flags silent
+  step remove ${OUT}/*
+  step remove ${OUT}/pages/*
+
+task header : clean
+  flags hidden
+  step write ${OUT}/pages/00-header.txt == ${TITLE} ==
+
+## Writes the two pages.
+task pages : clean header
+  step write ${OUT}/pages/01-home.txt Welcome to ${TITLE}.
+  step write ${OUT}/pages/02-about.txt Made with tasklane.
+
+## Word counts. May fail without failing the build.
+task stats : pages
+  flags silent optional
+  step concat ${OUT}/all.txt "${OUT}/pages/0?-*.txt"
+  step count ${OUT}/all.txt
+  step remove ${OUT}/all.txt
+
+## Builds build/site.txt.
+task site : stats header pages
+  step concat ${OUT}/site.txt "${OUT}/pages/*.txt"

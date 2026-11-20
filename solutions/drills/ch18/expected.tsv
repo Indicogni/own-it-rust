@@ -1,0 +1,9 @@
+d01_trait_not_in_scope.rs	E0599
+d02_lines_yields_results.rs	E0308
+d03_read_exact_short.rs	panic
+d04_lines_consumes.rs	E0382
+d05_path_display.rs	E0277
+d06_slice_reader.rs	ok
+d07_bufwriter_unflushed.rs	panic
+d08_osstr_is_not_str.rs	E0308
+d09_reader_not_mut.rs	E0596

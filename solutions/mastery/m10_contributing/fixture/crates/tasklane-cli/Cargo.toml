@@ -1,0 +1,17 @@
+[package]
+name = "tasklane-cli"
+description = "The `tasklane` command."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "tasklane"
+path = "src/main.rs"
+
+[dependencies]
+bitflags.workspace = true
+tasklane-core.workspace = true
+tasklane-plugin.workspace = true

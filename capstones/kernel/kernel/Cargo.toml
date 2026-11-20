@@ -1,0 +1,35 @@
+[package]
+name = "kernel"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+publish = false
+description = "The bare-metal kernel binary for the QEMU virt machine (aarch64-unknown-none)"
+
+# A package of its own, outside the host workspace one directory up.
+[workspace]
+
+[[bin]]
+name = "kernel"
+path = "src/main.rs"
+# A bare-metal binary cannot use the standard test harness. Test logic in
+# `kcore` on the host and the whole kernel with the QEMU tests.
+test = false
+bench = false
+
+[dependencies]
+kcore = { path = "../kcore" }
+
+[features]
+# SPEC 4.3: with this feature the kernel panics on purpose right after its
+# first line, so that the QEMU tests can check the panic path.
+selftest-panic = []
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+# Keep symbols and line tables so that gdb and lldb can show source lines.
+debug = true

@@ -1,0 +1,73 @@
+// Conway's Game of Life on a small board whose edges wrap around.
+// A glider moves one square down and one to the right every four steps.
+
+let size = 6;
+
+fn empty_board() {
+    let board = [];
+    for y in 0..size {
+        let row = [];
+        for x in 0..size { push(row, false); }
+        push(board, row);
+    }
+    board
+}
+
+// `%` keeps the sign of its left operand, so add `size` before taking it.
+fn wrap(n) { (n + size) % size }
+
+fn neighbours(board, x, y) {
+    var count = 0;
+    for dy in -1..2 {
+        for dx in -1..2 {
+            if dx == 0 and dy == 0 { continue; }
+            if board[wrap(y + dy)][wrap(x + dx)] { count = count + 1; }
+        }
+    }
+    count
+}
+
+fn step(board) {
+    let next = empty_board();
+    for y in 0..size {
+        for x in 0..size {
+            let n = neighbours(board, x, y);
+            next[y][x] = n == 3 or board[y][x] and n == 2;
+        }
+    }
+    next
+}
+
+fn show(board, title) {
+    print(title);
+    for row in board {
+        var line = "";
+        for cell in row { line = line + if cell { "#" } else { "." }; }
+        print(line);
+    }
+}
+
+fn population(board) {
+    var count = 0;
+    for row in board { for cell in row { if cell { count = count + 1; } } }
+    count
+}
+
+var board = empty_board();
+for cell in [[1, 0], [2, 1], [0, 2], [1, 2], [2, 2]] {
+    board[cell[1]][cell[0]] = true;
+}
+
+show(board, "start");
+for generation in 1..9 {
+    board = step(board);
+    if generation % 4 == 0 { show(board, "after " + str(generation) + " steps"); }
+}
+print("cells alive:", population(board));
+
+// After 24 steps on a board of 6 by 6 the glider is back where it started.
+let start = empty_board();
+for cell in [[1, 0], [2, 1], [0, 2], [1, 2], [2, 2]] { start[cell[1]][cell[0]] = true; }
+var again = start;
+for generation in 0..24 { again = step(again); }
+print("back at the start after 24 steps:", again == start);

@@ -1,0 +1,22 @@
+[package]
+name = "tally-fuzz"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "=0.4.13"
+tally-core = { path = "../tally-core" }
+
+[[bin]]
+name = "parse_line"
+path = "fuzz_targets/parse_line.rs"
+test = false
+doc = false
+bench = false
+
+# Not a member of the workspace above: it needs nightly and the fuzzer runtime.
+[workspace]

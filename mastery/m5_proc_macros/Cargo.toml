@@ -1,0 +1,39 @@
+# Mastery module M5: procedural macros.
+# A standalone workspace: not a member of the course's root package, so the
+# chapter checks never download or build these crates.
+#
+#   m5_proc_macros (this package)  the crate a user depends on: traits, run-time
+#                                  support, re-exported macros, and the tests
+#   macros/  (m5_macros)           the proc-macro crate for lessons 02 to 08 and C01
+#   bare/    (m5_bare)             the proc-macro crate for lesson 01: no dependencies
+[package]
+name = "m5_proc_macros"
+description = "Mastery module M5: procedural macros"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+publish = false
+
+[workspace]
+members = ["macros", "bare"]
+# Plain `cargo test` and `cargo clippy` cover all three crates.
+default-members = [".", "macros", "bare"]
+resolver = "3"
+
+[dependencies]
+m5_bare = { path = "bare" }
+m5_macros = { path = "macros" }
+
+[dev-dependencies]
+# Lesson 01 predictions: the same token types as the compiler's `proc_macro`
+# crate, usable in an ordinary test.
+proc-macro2 = "=1.0.107"
+# Compiles the programs in tests/ui/ one by one and checks the result.
+trybuild = "=1.0.125"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+dbg_macro = "warn"

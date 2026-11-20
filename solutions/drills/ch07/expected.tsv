@@ -1,0 +1,10 @@
+d01_question_mark_in_unit_fn.rs	E0277
+d02_no_from_conversion.rs	E0277
+d03_ignored_result.rs	ok
+d04_unwrap_panics.rs	panic
+d05_match_missing_err.rs	E0004
+d06_str_into_box_error.rs	E0308
+d07_error_needs_display.rs	E0277
+d08_borrowed_error.rs	E0308
+d09_from_conversion.rs	ok
+d10_boxed_error_across_threads.rs	E0277
