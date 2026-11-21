@@ -37,9 +37,15 @@ env:
 #   gh api repos/actions/checkout/git/ref/tags/v6.1.0
 # and, when the result's object type is "tag", follow its URL to the commit.
 
+# Learners copy this repository with "Use this template", and the copy
+# contains this workflow. Every job therefore runs only in the course
+# repository itself (pull requests to it included): in a learner's copy the
+# jobs are skipped, so solved lessons do not fail the checks and no Actions
+# minutes are used.
 jobs:
   plan:
     name: List the units
+    if: github.repository == 'Indicogni/own-it-rust'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
@@ -69,6 +75,7 @@ jobs:
 
   compile:
     name: Root package, formatting and coach (${{ matrix.os }})
+    if: github.repository == 'Indicogni/own-it-rust'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     strategy:
@@ -136,6 +143,7 @@ jobs:
 
   checks:
     name: Starter, link and concept checks (${{ matrix.os }})
+    if: github.repository == 'Indicogni/own-it-rust'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90
     strategy:
@@ -166,6 +174,18 @@ jobs:
         env:
           COURSE_FORBIDDEN: ${{ secrets.COURSE_FORBIDDEN }}
         run: python scripts/check_starters.py --strict
+      # .progress/ is not git-ignored, so that a learner's history is saved
+      # with their commits. The course itself must never contain one: in a
+      # learner's copy the coach would take it for their own history and
+      # starters.
+      - name: No .progress/ folder is committed
+        if: ${{ !cancelled() }}
+        run: |
+          if [ -n "$(git ls-files .progress)" ]; then
+            git ls-files .progress | head -n 5
+            echo "::error::.progress/ is committed; remove it with git rm -r --cached .progress"
+            exit 1
+          fi
       - name: Relative Markdown links and anchors
         if: ${{ !cancelled() }}
         run: python scripts/check_links.py
@@ -185,6 +205,7 @@ jobs:
   # clippy and, for chapters, every drill against expected.tsv.
   solutions:
     name: Unit ${{ matrix.unit }} (Linux)
+    if: github.repository == 'Indicogni/own-it-rust'
     needs: plan
     runs-on: ubuntu-latest
     timeout-minutes: 120
@@ -235,6 +256,7 @@ jobs:
   # units. The script reports every unit even when an earlier one fails.
   solutions-other-os:
     name: Units ${{ matrix.units }} (${{ matrix.os }})
+    if: github.repository == 'Indicogni/own-it-rust'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 300
     strategy:
@@ -267,6 +289,7 @@ jobs:
 
   miri:
     name: Miri, ${{ matrix.unit }}
+    if: github.repository == 'Indicogni/own-it-rust'
     needs: plan
     runs-on: ubuntu-latest
     timeout-minutes: 120
@@ -298,6 +321,7 @@ jobs:
 
   loom:
     name: loom, ${{ matrix.unit }}
+    if: github.repository == 'Indicogni/own-it-rust'
     needs: plan
     runs-on: ubuntu-latest
     timeout-minutes: 120

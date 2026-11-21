@@ -96,6 +96,39 @@ cargo build                           # the same plus the window
 cargo test                            # the same tests again
 ```
 
+### The window in the dev container or a codespace
+
+The course's dev container (see [Setup](../../README.md#setup)) already has
+the Linux packages that `minifb` needs. A container has no screen of its own,
+so it runs a small desktop that you open in your web browser. The desktop
+uses noVNC, a VNC client (a remote-screen viewer) that runs in a web page.
+
+1. Open the desktop: in VS Code, open the *Ports* panel, find port 6080, and
+   click the globe icon ("Open in Browser") next to it. This works the same
+   on your computer and in a codespace. On your computer the address is
+   usually <http://localhost:6080>; VS Code picks another port if 6080 is
+   already in use. The devcontainer CLI does not forward ports by itself.
+   If you use it, add `"appPort": [6080]` to `.devcontainer/devcontainer.json`
+   on your computer (this publishes the port), then open
+   <http://localhost:6080>.
+2. Click *Connect* and enter the password `vscode`.
+3. In the VS Code terminal (which runs inside the container), start the game
+   as usual, for example:
+
+   ```text
+   cd capstones/game
+   cargo run --release
+   ```
+
+   The container already tells programs to draw on that desktop (it sets the
+   `DISPLAY` variable), so the window appears in the browser tab.
+
+The picture travels through the network as a stream of screen updates, so
+the game can feel slow or uneven, especially in a codespace. For playing and
+for judging the frame rate, run the game natively on your own computer
+(macOS and Windows need nothing extra). The headless mode and all tests work
+the same in the container.
+
 ## How to work
 
 1. Read SPEC.md from start to end once. Then read CONCEPTS.md.

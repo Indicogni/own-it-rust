@@ -2,7 +2,7 @@
 
 [Module guide](../README.md) · [Concepts](../CONCEPTS.md#lesson-08--observability-and-operations) · [Lesson 08](../src/l08_operations.rs)
 
-This lab is done by hand. No test in this module needs Docker, and the course's automatic checks do not build the image. You need a working `docker` (or `podman`, with the same commands) and a finished capstone, because the image contains `beacon-server`. If your capstone is not finished, copy the reference solution over a scratch copy of the module first (see "Where the solutions are" in the module guide).
+This lab is done by hand. No test in this module needs Docker, and the course's automatic checks do not build the image. You need a working `docker` (or `podman`, with the same commands) and a finished capstone, because the image contains `beacon-server`. Run this lab on your host (your own computer), not inside the course's dev container or a codespace: the dev container does not include Docker. If you did the module in the dev container, push your work and pull it on your computer first. If your capstone is not finished, copy the reference solution over a scratch copy of the module first (see "Where the solutions are" in the module guide).
 
 Estimated time: 60 to 90 minutes.
 

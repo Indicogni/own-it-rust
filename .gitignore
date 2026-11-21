@@ -1,8 +1,8 @@
 target/
 .idea/
 .DS_Store
-# Your personal drill, review, and redo history.
-.progress/
+# .progress/ (your drill, review and redo history) is not ignored: it is
+# saved with your commits, so it survives a new clone or a deleted codespace.
 # Backups that scripts/make_notes.py keeps before it replaces a workbook.
 NOTES.md.bak*
 # Python caches from the scripts in scripts/.

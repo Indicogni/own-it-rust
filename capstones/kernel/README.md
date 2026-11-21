@@ -81,6 +81,15 @@ Plan for 40 to 60 hours of work (an estimate for a first kernel).
 
 ## Install the tools
 
+In the course's dev container or a codespace (see
+[Setup](../../README.md#setup)), steps 1 and 2 are already done: it has
+the `aarch64-unknown-none` target and QEMU (`qemu-system-aarch64`). Miri
+(step 3) is not installed; the command in step 3 installs it. For the
+optional debugger (step 4), the container's plain `gdb` may not understand
+Arm code; if it does not, install `gdb-multiarch` as the Debian line in step
+4 shows. Run `cargo progress doctor` from the repository root to check the
+target and QEMU.
+
 ### 1. The Rust target
 
 The file `rust-toolchain.toml` in this directory pins the toolchain and

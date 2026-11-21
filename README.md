@@ -25,7 +25,7 @@ You have written some code in another language: variables, functions, `if` and l
 - Rust users who can make code compile but want to know *why* it compiles, and want to write libraries, unsafe abstractions, async services and FFI with confidence;
 - teams who want a shared, tested path for onboarding.
 
-**You need:** a computer with Linux, macOS or Windows (see [Supported platforms](#supported-platforms)), Git, and a few gigabytes of free disk space: the pinned toolchain takes under 1 GB, and a debug build of all chapters about 0.5 GB. Some mastery modules and capstones download crates and need more; their READMEs say so. A few units need extra tools, such as a C compiler, a [nightly toolchain](#the-nightly-toolchain) with Miri, or QEMU; their READMEs list them before you start.
+**You need:** a computer with Linux, macOS or Windows (see [Supported platforms](#supported-platforms)), or only a web browser and a free GitHub account if you use [GitHub Codespaces](#way-2-github-codespaces-in-your-browser-optional); Git; and a few gigabytes of free disk space: the pinned toolchain takes under 1 GB, and a debug build of all chapters about 0.5 GB. Some mastery modules and capstones download crates and need more; their READMEs say so. A few units need extra tools, such as a C compiler, a [nightly toolchain](#the-nightly-toolchain) with Miri, or QEMU; their READMEs list them before you start.
 
 If you know C, C++, Go, Python, Java, C#, JavaScript or TypeScript, read the matching [guide](#guides) first. It tells you which chapters to give the most time.
 
@@ -47,6 +47,69 @@ When you finish a chapter, also fill in its row in [DECISIONS.md](DECISIONS.md),
 
 ## Setup
 
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/Indicogni/own-it-rust)
+
+You can set up the course in three ways. All three give you the same tools and the same results.
+
+| Way | What you need | Good for |
+| --- | --- | --- |
+| [1. A dev container on your computer](#way-1-a-dev-container-on-your-computer-recommended) (recommended) | Docker or a free alternative, and VS Code | Everyone. Every tool is ready, nothing is installed on your computer itself, and it works offline after the first start. |
+| [2. GitHub Codespaces in your browser](#way-2-github-codespaces-in-your-browser-optional) (optional) | A free GitHub account and a web browser | Trying the course without installing anything, or working from a computer that is not yours. |
+| [3. Install the tools yourself](#way-3-install-the-tools-yourself) | Git, rustup, and a few extra tools for some units | People who prefer their own setup, and the units that need your real machine (Docker labs, the game window at full speed). |
+
+A **dev container** (development container) is a Linux system that runs in a box on your computer. The file `.devcontainer/devcontainer.json` in this repository describes it: which Rust version, which tools and which editor extensions it has. VS Code reads that file, builds the container, and then works inside it. GitHub Codespaces uses the same file, but runs the container on a GitHub computer instead of yours.
+
+**Your own copy.** Your work is safe only when it is saved in a repository that belongs to you. This repository is a *template*: on its GitHub page, click **Use this template**. You then have two choices:
+
+- **Create a new repository**: you get your own copy on GitHub, with your own name on it, and you can make it private. For Way 1 and Way 3, do this first, and use your copy in the steps below. (You can also clone the course directly; then you cannot push your work to GitHub until you make your own repository.)
+- **Open in a codespace**: this starts a codespace (Way 2) at once, and you publish it as your own repository later.
+
+For Way 2, choose one of the two; you do not need both (see the steps below).
+
+Your copy contains the course's GitHub Actions workflows (the automatic checks in `.github/workflows/`). They run only in the course repository itself, so in your copy they are skipped and use none of your Actions minutes.
+
+### Way 1: A dev container on your computer (recommended)
+
+1. **Install a container tool.** [Docker Desktop](https://www.docker.com/products/docker-desktop/) works on macOS, Windows and Linux. Check its licence terms if you use it at work: large companies need a paid plan. Free alternatives are [Podman](https://podman.io/), [Rancher Desktop](https://rancherdesktop.io/) and, on macOS, [Colima](https://github.com/abiosoft/colima). [OrbStack](https://orbstack.dev/) (macOS) is free for personal use. VS Code supports Docker officially; the others usually work, but are not officially supported. On Linux, Docker Engine is enough. On Windows, Docker Desktop uses WSL 2 (the Windows Subsystem for Linux).
+2. **Give the container enough room.** Allow at least 4 CPUs and 8 GB of memory. Less works, but builds are slow. On macOS, and on Windows without WSL 2, set this in your container tool's settings. On Windows with WSL 2, Docker uses the limits of WSL (by default about half of your memory and all CPUs); change them in the *WSL Settings* app (in the Start menu) or in the file `.wslconfig` in your user folder if needed. On Linux there is nothing to set.
+3. **Install [VS Code](https://code.visualstudio.com/)** and its **Dev Containers** extension (extension ID `ms-vscode-remote.remote-containers`).
+4. **Open the course in a container.** In VS Code, open the Command Palette (F1, or Ctrl+Shift+P; Cmd+Shift+P on macOS) and run **Dev Containers: Clone Repository in Container Volume...**. Paste the URL of your copy, for example `https://github.com/YOUR-NAME/own-it-rust`. On macOS and Windows this is the faster choice, because the files stay inside the container's own storage (a *volume*) instead of being shared with your computer's disk.
+   - Or clone the repository in the usual way, open the folder in VS Code (*File*, *Open Folder*), and choose **Reopen in Container** when VS Code offers it (or run **Dev Containers: Reopen in Container**). Your files then stay in a normal folder on your disk. This is simple, but builds are slower on macOS and Windows.
+5. **Wait for the first start.** The first time, the container tool downloads and builds the container, installs Rust 1.99.0, and compiles the tests of every chapter (without running them), so that your first lesson starts quickly. This can take ten minutes or more. Later starts take seconds.
+6. **Open a terminal inside the container**: *Terminal*, *New Terminal* in VS Code. Every command in this course is typed there. Go on with [Check your setup](#check-your-setup).
+
+Inside the container you already have Rust 1.99.0 with rustfmt, clippy, rust-src and the `aarch64-unknown-none` target, a C compiler, QEMU for the kernel capstone, gdb (with `rust-gdb`) for the M9 debugger lab, the libraries of the game capstone's window, Python 3 and Git. VS Code inside the container has the rust-analyzer, CodeLLDB and Even Better TOML extensions. Two things are not included: the [nightly toolchain](#the-nightly-toolchain) with Miri (one command installs it when you need it), and Docker itself, so do the Docker labs of M9 and M11 on your own computer, outside the container.
+
+If you used **Clone Repository in Container Volume**, your files live in that volume, not in a folder you can see on your disk. If you delete the volume, your work is gone unless you pushed it (see [Save your work](#save-your-work)).
+
+Other editors: JetBrains IDEs and the [Dev Container CLI](https://github.com/devcontainers/cli) can also use the same `.devcontainer/devcontainer.json`. With the CLI, `devcontainer up --workspace-folder .` starts the container and `devcontainer exec --workspace-folder . bash` opens a shell in it. Use a current version of the CLI: older versions (0.80, for example) wait forever after "Container started" with Docker 29, because they do not recognise its newer event format. Version 0.91.0 works.
+
+### Way 2: GitHub Codespaces in your browser (optional)
+
+A **codespace** is a dev container that runs on a GitHub computer. You use VS Code in your browser, and nothing is installed on your computer. It runs on your own GitHub account and uses your free monthly allowance (see below).
+
+1. Sign in to GitHub. A free account is enough.
+2. Start the codespace in one of two ways. They are alternatives; choose one.
+   - **(a)** Open the course repository, <https://github.com/Indicogni/own-it-rust>, click **Use this template**, then **Open in a codespace**. You publish your work as your own repository later (step 5).
+   - **(b)** If you already made your own copy with **Create a new repository**, open your copy, click **Code**, open the **Codespaces** tab, and click **Create codespace**. Your work then goes to your copy from the start.
+   - The **Open in GitHub Codespaces** button at the top of this section opens a codespace on the course repository itself. You cannot push to the course repository. When you commit there, GitHub links your codespace to a copy (a *fork*) under your account.
+3. Wait for the first start (several minutes; it builds the container and compiles the chapters' tests). VS Code opens in the browser with this README and Chapter 1's `CONCEPTS.md`.
+4. Open a terminal (*Terminal*, *New Terminal*) and go on with [Check your setup](#check-your-setup).
+5. **Publish your work.** If you chose (a), **Open in a codespace**, your work is not in any repository yet. In the Source Control view, commit your changes and click **Publish Branch**; VS Code then creates a repository under your account (choose private or public). Do this early. If you delete a codespace that you never published, your work is deleted with it.
+
+**What Codespaces costs, and how long your work stays.** These are GitHub's rules on 20 November 2026; check [GitHub's billing page for Codespaces](https://docs.github.com/en/billing/concepts/product-billing/github-codespaces) for the current numbers.
+
+- **Your free allowance.** A free personal GitHub account includes 120 core hours of compute time and 15 GB-month of storage each month (GitHub Pro: 180 core hours and 20 GB-month). A "core hour" is one processor core for one hour. This course asks for a machine with 4 cores and 8 GB of memory, so one hour of work uses 4 core hours. 120 core hours are therefore **about 30 hours of work a month**. If you have not added a payment method to your account, GitHub does not charge you: when the allowance is used up, you cannot use Codespaces again until the next month.
+- **Storage counts while a codespace exists,** even when it is stopped. Delete codespaces you no longer need (after you pushed your work) at <https://github.com/codespaces>.
+- **Idle timeout.** A codespace stops after 30 minutes without activity (you can change this between 5 and 240 minutes in your GitHub settings). A stopped codespace keeps your files, and you can start it again from <https://github.com/codespaces>.
+- **Automatic deletion.** A codespace that has been stopped and unused for 30 days is deleted automatically, **even if it has changes you did not push.**
+
+So: **your work is safe only when it is committed and pushed** to your repository on GitHub. Push at the end of every session.
+
+To see the game window of the [game capstone](capstones/game/README.md) in a dev container or a codespace, see its README. The game runs more smoothly on your own computer.
+
+### Way 3: Install the tools yourself
+
 <a id="fresh-clone-setup"></a>
 Install Git and [Rust through rustup](https://www.rust-lang.org/tools/install). The repository pins Rust **1.99.0** with rustfmt, clippy and rust-src in `rust-toolchain.toml`, and uses edition 2024; rustup installs the pinned toolchain the first time you run Cargo in the directory. The course was last verified against Rust 1.99.0. Rust 1.100.0, released on 12 November 2026, is newer than the pin; where it changes what a lesson teaches (the never type `!` and `Infallible`, in [Chapter 6](exercises/chapter06/CONCEPTS.md) and [M1](mastery/m1_types/CONCEPTS.md) lesson 06), the lesson has a marked note. Keep the pin while you work through the course, so that your compiler's messages match the text.
 
@@ -57,6 +120,7 @@ cargo test --locked --offline --all-targets --no-run
 cargo progress
 ```
 
+- If you made your own copy from the template, clone that copy instead: put its URL after `git clone`, and `cd` into the folder it creates.
 - The third command compiles every chapter without running any unfinished code. The chapters use only the standard library, so no network is needed after rustup has installed the toolchain.
 - The first build prints one `warning[E0133]` for `exercises/chapter23/c01_code_review.rs`. That warning is part of that code-review lesson.
 - Run `cargo progress` once before you edit anything: it saves a copy of every untouched lesson, so that you can redo a lesson later.
@@ -66,13 +130,46 @@ Run `cargo drill` and `cargo progress` from the repository root or from any dire
 
 `src/main.rs` is a playground for your own experiments: `cargo run --features playground`. Each chapter also has a scratch file, for example `cargo run --example ch04_scratch`.
 
+Some units need extra tools: a C compiler (Chapter 24, M6, M11), QEMU and the `aarch64-unknown-none` target (the kernel capstone), a debugger (the M9 debugger lab), and the [nightly toolchain](#the-nightly-toolchain) with Miri. The dev container has all of them except the nightly toolchain. On your own computer, each unit's README says how to install what it needs.
+
+### Check your setup
+
+Whichever way you chose, run this in the course directory:
+
+```sh
+cargo progress doctor
+```
+
+It prints where it runs (a codespace, a dev container, or your own machine) and checks your tools. The required checks are Rust 1.99.0 (the version this directory pins), clippy and rustfmt; if one of them fails, the command says how to fix it and ends with an error. The other checks are optional and only report: rust-src, Git, the `aarch64-unknown-none` target and QEMU (kernel capstone), a C compiler (Chapter 24, M6), `rust-gdb` or `rust-lldb` (M9 debugger lab), `nightly-2026-11-20` with Miri (Miri labs) and Docker (the Docker labs of M9 and M11). A missing optional tool matters only when you reach the unit that needs it.
+
+Then run `cargo progress` once, before you edit anything (see above), and start with [Chapter 1](exercises/chapter01/README.md).
+
+### Save your work
+
+Your solutions, your `NOTES.md` files and your history in `.progress/` are all files in your copy of the repository. Save them with Git: a **commit** records a snapshot of your files in your copy, and a **push** sends your commits to your repository on GitHub.
+
+- **In VS Code:** open the Source Control view (the branch icon on the left). Enter a short message, such as `Chapter 1, lessons 01 to 03`, and choose **Commit** (VS Code asks whether to stage all changes; say yes). Then click **Sync Changes** or **Push**. In the dropdown next to **Commit** there is also **Commit & Push**.
+- **In a terminal:**
+
+  ```sh
+  git add -A
+  git commit -m "Chapter 1, lessons 01 to 03"
+  git push
+  ```
+
+Commit and push at the end of every session. In a codespace this matters most: a codespace is deleted after 30 days without use, and anything you did not push is deleted with it. On your own computer, a push is also your backup.
+
 ### Supported platforms
 
 The course has been verified on macOS on Apple silicon. The "Course checks" workflow also runs every check on Linux and Windows; treat those platforms as verified only once that workflow is green for the version you cloned.
 
+The dev container and Codespaces run Linux (on any computer). The "Dev container" workflow ([`.github/workflows/devcontainer.yml`](.github/workflows/devcontainer.yml)) builds the dev container and checks the tools in it, so it counts as verified when that workflow is green too. The Docker labs of M9 and M11 cannot run inside the container; do them on your own computer.
+
 ### Editor setup
 
-Any text editor works. An editor with rust-analyzer, the official Rust language server (in VS Code, the "rust-analyzer" extension), shows errors, types and completions while you type. Open the repository folder, not a single file.
+**In the dev container or a codespace,** VS Code already has rust-analyzer, CodeLLDB (a debugger front end) and Even Better TOML (for `Cargo.toml` files), and rust-analyzer works as soon as the first build has finished. The notes below about the separate packages still apply.
+
+**On your own computer,** any text editor works. An editor with rust-analyzer, the official Rust language server (in VS Code, the "rust-analyzer" extension), shows errors, types and completions while you type. Open the repository folder, not a single file.
 
 rust-analyzer loads the Cargo package of the folder you open, here the root package with all chapters, and does not look for other packages inside it. The project, the ecosystem track, the mastery modules, the capstones and the checkpoints are standalone packages, so their files get no errors, completion or go-to-definition in a window opened on the repository root. When you work on one of them, do one of two things:
 
@@ -241,9 +338,10 @@ Model solutions ship in [`solutions/`](solutions/), which mirrors the repository
 | `cargo progress reviewed ch04` | Record a review when one is due; add `--early` to record it sooner. |
 | `cargo progress redo ch04 l08` | Archive your solution and restore the lesson's starter. |
 | `cargo progress solution ch04 l01` | Show where the model solution is. |
+| `cargo progress doctor` | Check your setup: where it runs, the required tools (Rust 1.99.0, clippy, rustfmt) and the optional ones, each with the fix when it is missing. See [Check your setup](#check-your-setup). |
 | `cargo run --example ch04_scratch` | Free-form experiments for a chapter. |
 
-In the `cargo progress` table, ✓ means all tests pass, ◐ some tests pass and · no test passes yet. On a fresh clone, every C01 and three lessons with supplied helper tests (Chapter 18 L09, Chapter 22 L08 and Chapter 23 L09) show ◐, because some of their tests pass from the start. A chapter whose test program crashes shows `crashed (reason)` and is never counted. A chapter still running after 120 seconds is stopped and its unfinished tests are named. The limits can be changed with `COACH_TEST_SECS` (default 120), `COACH_DRILL_SECS` (20) and `COACH_PACKAGE_SECS` (900). Drill predictions accept `ok` or `compiles`, `panic` or `panics`, `error` or `compile error`, or error codes in any punctuation (`error[E0382].`). `redo` never overwrites an earlier archive and does nothing when the lesson still equals its starter. Your history lives in `.progress/` at the repository root, which Git ignores.
+In the `cargo progress` table, ✓ means all tests pass, ◐ some tests pass and · no test passes yet. On a fresh clone, every C01 and three lessons with supplied helper tests (Chapter 18 L09, Chapter 22 L08 and Chapter 23 L09) show ◐, because some of their tests pass from the start. A chapter whose test program crashes shows `crashed (reason)` and is never counted. A chapter still running after 120 seconds is stopped and its unfinished tests are named. The limits can be changed with `COACH_TEST_SECS` (default 120), `COACH_DRILL_SECS` (20) and `COACH_PACKAGE_SECS` (900). Drill predictions accept `ok` or `compiles`, `panic` or `panics`, `error` or `compile error`, or error codes in any punctuation (`error[E0382].`). `redo` never overwrites an earlier archive and does nothing when the lesson still equals its starter. Your history lives in `.progress/` at the repository root, together with the starter copies that `redo` restores (about 2 MB). Git does not ignore it, so it is saved with your commits and survives when a codespace or a container is deleted. Commit it with the rest of your work.
 
 ### The nightly toolchain
 
@@ -281,10 +379,11 @@ The scripts in [`scripts/`](scripts/) need Python 3.9 or newer and change nothin
 | `python3 scripts/check_links.py` | Every relative Markdown link and anchor resolves |
 | `python3 scripts/make_notes.py --all --check` | Every chapter's `NOTES.md` matches its generator (writes a workbook only when asked) |
 
-The "Course checks" workflow in [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs these checks on Linux, macOS and Windows: it compiles every starter in both profiles and runs the coach, checks structure, links, notes and concept code blocks, runs every model solution and drill, and runs Miri and loom on the solved unsafe and concurrent code.
+The "Course checks" workflow in [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs these checks on Linux, macOS and Windows: it compiles every starter in both profiles and runs the coach, checks structure, links, notes and concept code blocks, runs every model solution and drill, and runs Miri and loom on the solved unsafe and concurrent code. This workflow and the "Dev container" workflow run only in the course repository, not in your copy (see [Your own copy](#setup)).
 
 ## Guides
 
+- [Start here](guides/START_HERE.md): the course on one page, the three ways to set up, and your first hour
 - [Coming to Rust from C and C++](guides/FROM_C_AND_CPP.md)
 - [Coming to Rust from Go](guides/FROM_GO.md)
 - [Coming to Rust from Python](guides/FROM_PYTHON.md)

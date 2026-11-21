@@ -1,0 +1,156 @@
+name: Dev container
+
+# Builds the course's dev container (.devcontainer/) and checks inside it
+# that the tools a learner needs are there and work: the pinned Rust, the
+# coach, a chapter, the kernel capstone under QEMU and the game capstone with
+# its window crate. It runs when the container's definition, the toolchain
+# pins, the coach, the course scripts or the units it checks change.
+#
+# The image is never pushed to a registry: learners build it themselves
+# (locally or in Codespaces) from .devcontainer/.
+
+on:
+  push:
+    paths:
+      - ".devcontainer/**"
+      - ".github/workflows/devcontainer.yml"
+      - "rust-toolchain.toml"
+      - "capstones/kernel/rust-toolchain.toml"
+      - "Cargo.toml"
+      - "**/Cargo.lock"
+      - "examples/coach.rs"
+      - "scripts/**"
+      - "exercises/chapter01/**"
+      - "drills/ch01/**"
+      - "solutions/exercises/chapter01/**"
+      - "solutions/drills/ch01/**"
+      - "capstones/kernel/**"
+      - "capstones/game/**"
+      - "solutions/capstones/kernel/**"
+      - "solutions/capstones/game/**"
+  pull_request:
+    paths:
+      - ".devcontainer/**"
+      - ".github/workflows/devcontainer.yml"
+      - "rust-toolchain.toml"
+      - "capstones/kernel/rust-toolchain.toml"
+      - "Cargo.toml"
+      - "**/Cargo.lock"
+      - "examples/coach.rs"
+      - "scripts/**"
+      - "exercises/chapter01/**"
+      - "drills/ch01/**"
+      - "solutions/exercises/chapter01/**"
+      - "solutions/drills/ch01/**"
+      - "capstones/kernel/**"
+      - "capstones/game/**"
+      - "solutions/capstones/kernel/**"
+      - "solutions/capstones/game/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Pinning actions: every `uses:` names the full commit SHA of a release, with
+# the release as a comment, as in ci.yml. Look a new SHA up with, for example,
+#   gh api repos/devcontainers/ci/git/ref/tags/v0.3.1900000450
+# and, when the result's object type is "tag", follow its URL to the commit.
+
+# Learners copy this repository with "Use this template", and the copy
+# contains this workflow. Every job therefore runs only in the course
+# repository itself (pull requests to it included): in a learner's copy the
+# jobs are skipped, so solved lessons do not fail the checks and no Actions
+# minutes are used.
+jobs:
+  build-and-check:
+    name: Build and check (${{ matrix.runner }})
+    if: github.repository == 'Indicogni/own-it-rust'
+    # Both architectures learners use: x86_64 (most PCs, Codespaces) and
+    # arm64 (Apple silicon Macs). Each runner builds the image for its own
+    # architecture.
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+
+      # The Dockerfile names the Rust version a second time. If it fell
+      # behind rust-toolchain.toml, rustup would quietly download the new
+      # version on the learner's first Cargo command, and the container
+      # would no longer work offline.
+      - name: The Dockerfile installs the Rust version of rust-toolchain.toml
+        run: |
+          pin="$(sed -n 's/^channel *= *"\(.*\)"/\1/p' rust-toolchain.toml)"
+          echo "rust-toolchain.toml pins $pin"
+          if ! grep -qx "ARG RUST_VERSION=$pin" .devcontainer/Dockerfile; then
+            echo "::error::.devcontainer/Dockerfile must say ARG RUST_VERSION=$pin"
+            exit 1
+          fi
+          kernel="$(sed -n 's/^channel *= *"\(.*\)"/\1/p' capstones/kernel/rust-toolchain.toml)"
+          if [ "$kernel" != "$pin" ]; then
+            echo "::error::capstones/kernel/rust-toolchain.toml pins $kernel, not $pin"
+            exit 1
+          fi
+
+      # Builds the image, starts the container (which runs onCreateCommand:
+      # the chapters' test build, and postCreateCommand: cargo progress
+      # doctor) and then runs runCmd inside it as the `vscode` user.
+      - name: Build the dev container and run the checks in it
+        uses: devcontainers/ci@513af61f4de4f75d37e4438f184ba4358f0fc1ca # v0.3.1900000450
+        with:
+          push: never
+          runCmd: |
+            set -euxo pipefail
+            # The setup check a learner runs. It must pass here: every
+            # required tool is in the image.
+            cargo progress doctor
+            # The tools the optional checks look for, by name.
+            rustc --version
+            rustup target list --installed | grep -x aarch64-unknown-none
+            qemu-system-aarch64 --version
+            cc --version
+            rust-gdb --version
+            python3 --version
+            git --version
+            test "$DISPLAY" = ":1"
+            # Only the pinned toolchain: nothing was downloaded after the
+            # image was built.
+            test "$(rustup toolchain list | wc -l)" -eq 1
+            # The debugger can start a program in the container. gdb, like
+            # LLDB, turns address space randomization off at launch; without
+            # capAdd SYS_PTRACE and seccomp=unconfined (devcontainer.json)
+            # Docker refuses, and gdb reports "Operation not permitted".
+            work="$(mktemp -d)"
+            printf '%s\n' 'fn main() {' '    let numbers = vec![1, 2, 3];' \
+              '    println!("{}", numbers.len());' '}' > "$work/debugme.rs"
+            rustc -g -o "$work/debugme" "$work/debugme.rs"
+            rust-gdb -batch -ex "break debugme.rs:3" -ex run -ex "print numbers" \
+              -ex continue "$work/debugme" 2>&1 | tee "$work/gdb.txt"
+            if grep -qi "not permitted" "$work/gdb.txt"; then exit 1; fi
+            grep -q "Vec(size=3)" "$work/gdb.txt"
+            # The starters fail at todo!() by design, so check the model
+            # solutions instead: chapter 1 (tests and drills), the kernel
+            # capstone (QEMU and the bare-metal target) and the game
+            # capstone (minifb's build on Linux). Debug profile only, to
+            # keep the job short; ci.yml checks both profiles.
+            python3 scripts/check_solutions.py --only ch01,cap_kernel,cap_game --profile debug
+            # The game window opens on the browser desktop (DISPLAY=:1). On a
+            # 16-bit display minifb crashes with a segmentation fault (exit
+            # 139), so this catches a lost VNC_RESOLUTION setting. A game that
+            # is still running when `timeout` stops it exits with 124.
+            for _ in $(seq 60); do test -S /tmp/.X11-unix/X1 && break; sleep 1; done
+            cp -r capstones/game "$work/game"
+            cp -r solutions/capstones/game/. "$work/game/"
+            (cd "$work/game" && cargo build --locked --quiet)
+            status=0
+            (cd "$work/game" && timeout 5 ./target/debug/game) || status=$?
+            test "$status" -eq 124

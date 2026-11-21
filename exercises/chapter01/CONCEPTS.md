@@ -39,12 +39,13 @@ first lesson tells you what to type.
 ## Time
 
 These are estimates for a first pass. They include reading the
-section, the predictions, the tasks and your notes. Installing Rust can take
-longer on a slow connection.
+section, the predictions, the tasks and your notes. The first setup can take
+longer: installing Rust on a slow connection, or the first start of a dev
+container or a codespace, which can take ten minutes or more.
 
 | Lesson | Estimate |
 | --- | --- |
-| 01 · Install, verify, and a first green test | 45 minutes |
+| 01 · Install, verify, and a first green test | 50 minutes |
 | 02 · Cargo: new, run, check, build, test | 35 minutes |
 | 03 · Reading a failing test | 35 minutes |
 | 04 · Reading a compiler error | 30 minutes |
@@ -74,14 +75,58 @@ That is about four and a half hours in total.
 
 ### The idea
 
-You need three things on your computer: the Rust toolchain, a copy of the
-course, and an editor. After that, one command runs the tests of one lesson.
+You need three things: the Rust toolchain, a copy of the course, and an
+editor. After that, one command runs the tests of one lesson.
 A test that fails is printed as `FAILED`, and a test that passes is printed
 as `ok`. Programmers say "red" and "green" for these two results. This lesson
 takes one test from red to green, so that you know the whole path works
 before the content gets harder.
 
+### Choose how to set up
+
+There are three ways to get the tools. Choose one. The [Setup section of the
+course README](../../README.md#setup) has every step for each of them.
+
+1. **A dev container on your computer (recommended).** A *container* is a
+   small Linux system that runs in a box on your computer. A *dev container*
+   (development container) is one that is made for writing code. This course
+   describes its dev container in the file `.devcontainer/devcontainer.json`:
+   Rust 1.99.0, the editor extensions, and every extra tool that later units
+   need. You install a container tool (Docker Desktop, or a free alternative
+   such as Podman) and the editor VS Code with its *Dev Containers*
+   extension. VS Code then builds the container and works inside it. You do
+   not install Rust on your computer itself. Skip the next section,
+   "Install Rust with rustup".
+2. **GitHub Codespaces in your browser (optional).** A *codespace* is the same
+   dev container, but it runs on a GitHub computer, and you use VS Code in
+   your web browser. You need only a free GitHub account. It uses your free
+   monthly allowance of Codespaces time, which is about 30 hours of work a
+   month for this course. Skip "Install Rust with rustup" too.
+3. **Install the tools yourself.** Follow the next two sections. Choose this
+   if you prefer your own setup.
+
+**Your own copy.** Start from your own copy of the course on GitHub, so that
+your work is saved in a repository that belongs to you. The course
+repository is a *template*: on its page, click *Use this template*. Then
+choose one of two:
+
+- *Create a new repository*: your own copy. For the first and third ways, do
+  this. For a codespace, you can then open your copy and click *Code*,
+  *Codespaces*, *Create codespace*.
+- *Open in a codespace*: a codespace straight away, without a copy. You
+  publish it as your own repository later.
+
+The section "Save your work" below shows how to save your work.
+
+In a dev container or a codespace, the terminal inside VS Code (*Terminal*,
+*New Terminal*) is already in the course directory. Type every command of
+this course there.
+
 ### Install Rust with rustup
+
+This section is for the third way only. In a dev container or a codespace,
+Rust is already installed; go on with the check of the version in the next
+section.
 
 Rust is installed by a small program called **rustup**. It downloads
 toolchains and keeps them up to date. Follow the official instructions at
@@ -109,10 +154,15 @@ You now have three commands:
 
 ### Get the course and check the version
 
+In a dev container or a codespace, you already have the course: VS Code
+opened it for you. Read the next paragraph about Git, then jump to the
+version check, the paragraph that starts "The course works with one exact
+version of Rust".
+
 The course lives in a Git repository at
 <https://github.com/Indicogni/own-it-rust>. **Git** is a program that
-copies a repository to your computer and records changes to files. There are
-two ways to get the course.
+copies a repository to your computer and records changes to files. If you
+install the tools yourself, there are two ways to get the course.
 
 **With Git (recommended).** Check whether Git is installed: type
 `git --version` in a terminal. If the command is not found, install Git from
@@ -126,8 +176,10 @@ cd own-it-rust
 ```
 
 The first command creates the folder `own-it-rust`. The second goes into
-it: `cd` means "change directory". The [Setup section of the course
-README](../../README.md#fresh-clone-setup) shows the same commands.
+it: `cd` means "change directory". If you made your own copy with *Use this
+template*, put the address of your copy after `git clone` instead. The
+[Setup section of the course README](../../README.md#fresh-clone-setup) shows
+the same commands.
 
 **Without Git.** On the repository page, click the green *Code* button, then
 *Download ZIP*. Unpack the ZIP file. The folder inside is named after the
@@ -176,12 +228,30 @@ The three numbers after `rustc` are the version. If you run the same command
 in another directory, you may see a newer version. That is correct: the file
 `rust-toolchain.toml` only applies inside the course directory.
 
+The course coach can check all of your tools at once:
+
+```sh
+cargo progress doctor
+```
+
+It says whether it runs in a codespace, in a dev container or on your own
+machine. Then it checks the tools. Rust 1.99.0, clippy and rustfmt are
+required: if one of them is missing, the command prints the fix and ends with
+an error. The other tools, such as a C compiler or QEMU, are needed only by
+later units, so the command only reports them. You can ignore them for now.
+
 ### An editor that understands Rust
 
 You can write Rust in any text editor. An editor with **rust-analyzer** is
 much more comfortable. rust-analyzer is the official helper program for
 editors. It shows compiler errors while you type, shows the type of a value
 when you point at it, and jumps to the place where a function is defined.
+
+In a dev container or a codespace, VS Code already has rust-analyzer and
+two more extensions: CodeLLDB, for the debugger, and Even Better TOML, for
+files such as `Cargo.toml`. You install nothing; rust-analyzer starts when
+the first build is finished. The rest of this section is for the third way,
+except the part about the separate packages, which applies to everyone.
 
 A free and common choice is Visual Studio Code with the extension named
 "rust-analyzer". Open the **whole course directory** in the editor (in VS
@@ -317,6 +387,43 @@ predictions of a lesson before the first run. The test stops at the first
 wrong answer, so the report shows one wrong prediction at a time: correct it,
 run again, and the next one appears.
 
+### Save your work
+
+Your solutions are files in your copy of the course. Git saves them in two
+steps:
+
+- A **commit** records a snapshot of your changed files, with a short
+  message, in your copy of the repository.
+- A **push** sends your new commits to your repository on GitHub. Until you
+  push, the commits exist only in the place where you work.
+
+In VS Code, open the *Source Control* view: the icon of a branch in the bar
+on the left. It lists the files you changed. Type a message such as
+`Chapter 1, lesson 01` in the box at the top, and click *Commit*. If VS Code
+asks whether to stage all your changes and commit them, answer *Yes*. Then
+click *Sync Changes* (or *Push*). In the menu next to the *Commit* button
+there is also *Commit & Push*, which does both. In a codespace that you
+opened with *Open in a codespace*, the first time you click *Publish
+Branch* instead: VS Code asks for a name and creates the repository under
+your GitHub account.
+
+In a terminal, the same three commands work everywhere:
+
+```sh
+git add -A
+git commit -m "Chapter 1, lesson 01"
+git push
+```
+
+`git add -A` chooses all changed files for the next commit, `git commit`
+records them, and `git push` sends them to GitHub.
+
+Do this at the end of every session. In a codespace it is the only way to
+keep your work. A codespace stops after 30 minutes without activity; that
+is harmless, because a stopped codespace keeps its files. But a codespace
+that stays unused for 30 days is deleted, together with everything you did
+not push. On your own computer, a push is your backup.
+
 ### Mistakes people really make
 
 **The terminal is in the wrong directory.** Cargo looks for `Cargo.toml` in
@@ -384,6 +491,9 @@ and open a new one.
 
 - [Install Rust](https://www.rust-lang.org/tools/install), the official
   installation page.
+- [Developing inside a container](https://code.visualstudio.com/docs/devcontainers/containers),
+  VS Code's guide to dev containers.
+- [GitHub Codespaces documentation](https://docs.github.com/en/codespaces).
 - [The rustup book: overrides](https://rust-lang.github.io/rustup/overrides.html)
   explains `rust-toolchain.toml`.
 - [`todo!` in the standard library](https://doc.rust-lang.org/std/macro.todo.html).
@@ -1295,8 +1405,10 @@ Each lesson has a mark, explained in the first line. The last line is the
 command for your next unfinished lesson. When a whole chapter is green, the
 tool starts a review plan for it: it asks you to come back to the chapter
 after 1, 3, 7, 21 and 60 days. The plan is kept in the directory
-`.progress/`, which belongs to you and is not shared. Run `cargo progress`
-at the start of every session.
+`.progress/`, together with the untouched copies of the lessons. It belongs
+to you. Git saves it with your commits, so your plan is kept when you push,
+even if a codespace is deleted. Run `cargo progress` at the start of every
+session.
 
 **`cargo drill ch01`** runs the compiler drills of a chapter, as described in
 lesson 04. `cargo drill` without a chapter prints how many drills you have

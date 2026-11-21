@@ -8,9 +8,11 @@ This is the first chapter of the course, and it assumes that you have never used
 
 ## First steps
 
-1. Read "Lesson 01" in [CONCEPTS.md](CONCEPTS.md). It tells you how to install Rust and an editor.
-2. Open a terminal in the course directory and run `cargo progress` once, before you change any file. It shows every chapter and lesson, and it keeps an untouched copy of each lesson so that you can get it back later.
-3. Run `cargo test --test chapter01 l01_`. Four tests fail. That is the correct starting state: the tasks are not done yet.
+1. Read "Lesson 01" in [CONCEPTS.md](CONCEPTS.md). It shows three ways to get Rust and an editor, and how to choose: a dev container on your computer (recommended), GitHub Codespaces in your browser, or installing the tools yourself. The [Setup section of the course README](../../README.md#setup) has every step.
+2. Open a terminal in the course directory and run `cargo progress doctor`. It checks that Rust 1.99.0, clippy and rustfmt are ready, and tells you how to fix anything that is missing.
+3. Run `cargo progress` once, before you change any file. It shows every chapter and lesson, and it keeps an untouched copy of each lesson so that you can get it back later.
+4. Run `cargo test --test chapter01 l01_`. Four tests fail. That is the correct starting state: the tasks are not done yet.
+5. At the end of every session, **save your work with Git**: commit and push (Lesson 01 shows how). In a codespace this is the only way to keep your work, because an unused codespace is deleted after 30 days.
 
 ## Work through the chapter
 
@@ -53,7 +55,9 @@ Open the [hints](HINTS.md) only after a first attempt. Each lesson has three hin
 
 | Topic | Where you practise it |
 | --- | --- |
+| Choosing a setup: dev container, Codespaces, or your own installation | Lesson 01 (set-up, no test) |
 | Installing Rust with rustup; the pinned toolchain file; checking the version | Lesson 01 (task B) |
+| Saving your work: commit and push | Lesson 01 (set-up, no test) |
 | An editor with rust-analyzer | Lesson 01 (set-up, no test) |
 | Running one lesson; what `todo!()` and `guess()` do | Lesson 01 |
 | `cargo new`, `check`, `build`, `run`, `test` in a package of your own | Lesson 02 (lab and tasks A to D) |

@@ -1,0 +1,109 @@
+// The course's dev container: a Linux machine with everything the course
+// needs, for VS Code ("Dev Containers: Reopen in Container"), GitHub
+// Codespaces, JetBrains IDEs and the devcontainer CLI.
+// Reference: https://containers.dev/implementors/json_reference/
+//
+// .github/workflows/devcontainer.yml builds this container and runs checks
+// in it whenever this folder changes.
+{
+	"name": "Own It: Hands-On Mastery of Rust",
+
+	// The image: a pinned Debian base image with Rust 1.99.0 (installed with
+	// rustup for the `vscode` user), a C compiler, QEMU, gdb, Python and the
+	// libraries of the game capstone's window. See Dockerfile.
+	"build": {
+		"dockerfile": "Dockerfile"
+	},
+
+	"features": {
+		// A light desktop (Fluxbox) that you open in a web browser (noVNC).
+		// The game capstone opens its window there, because a container has
+		// no screen of its own. Open port 6080 from the Ports panel of VS Code
+		// (the globe icon; locally usually http://localhost:6080), click
+		// Connect and enter the password. The feature sets DISPLAY=:1, so a
+		// program started from the container's terminal opens on this desktop.
+		// Pinned to major version 1 of the feature.
+		"ghcr.io/devcontainers/features/desktop-lite:1": {
+			"password": "vscode",
+			"webPort": "6080"
+		}
+	},
+
+	// The user that the editor, the terminals and the commands below run as.
+	// The base image creates it; Rust is installed in its home directory.
+	"remoteUser": "vscode",
+
+	// For the debugger (the M9 debugger lab, CodeLLDB, rust-gdb). A debugger
+	// needs ptrace, and it turns off address space randomization when it
+	// starts a program. Docker's default security profile (seccomp) blocks
+	// that, and the debugger then fails to start the program. The official
+	// Rust feature of the dev containers project sets the same two values.
+	"capAdd": ["SYS_PTRACE"],
+	"securityOpt": ["seccomp=unconfined"],
+
+	// Lets `cargo progress doctor` say that it runs in this dev container.
+	// (Codespaces also sets CODESPACES=true by itself.)
+	"containerEnv": {
+		"DEVCONTAINER": "true",
+		// The browser desktop (desktop-lite) starts at 16-bit colour by
+		// default. The game capstone's window library (minifb) crashes with
+		// a segmentation fault on a 16-bit X display, so use 24-bit colour.
+		// Checked in the container: 16-bit crashes, 24-bit shows the game.
+		"VNC_RESOLUTION": "1440x900x24"
+	},
+
+	// The recommended machine size. With 2 cores the course works, but the
+	// first build and the capstones are slow. Codespaces picks a machine of
+	// at least this size; other tools only warn.
+	"hostRequirements": {
+		"cpus": 4,
+		"memory": "8gb"
+	},
+
+	// Runs once, when the container is created, and in a Codespaces prebuild.
+	// It compiles every chapter's tests (without running them) and the coach,
+	// so that the first lesson starts at once. This is the slow step.
+	"onCreateCommand": "bash .devcontainer/on-create.sh",
+
+	// Runs once, when the container is first given to you. Kept short: it
+	// runs `cargo progress doctor` and prints where to start.
+	"postCreateCommand": "bash .devcontainer/post-create.sh",
+
+	// Port 6080 is the browser desktop (see "features" above). It is
+	// forwarded without a pop-up; open it from the Ports panel.
+	"forwardPorts": [6080],
+	"portsAttributes": {
+		"6080": {
+			"label": "Desktop for the game window (password: vscode)",
+			"onAutoForward": "silent"
+		},
+		// The desktop's raw VNC port. Only for a separate VNC viewer; the
+		// browser desktop on 6080 is enough, so it is not forwarded.
+		"5901": {
+			"label": "VNC (optional)",
+			"onAutoForward": "ignore"
+		}
+	},
+
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				// The Rust language server: errors, types and completion as you type.
+				"rust-lang.rust-analyzer",
+				// A debugger for Rust programs (CodeLLDB).
+				"vadimcn.vscode-lldb",
+				// Highlighting and checks for Cargo.toml and other TOML files.
+				"tamasfe.even-better-toml"
+			]
+		},
+		"codespaces": {
+			// Files that open when a codespace is created. Paths are relative
+			// to the repository root. They open in this order, and the first
+			// one is the active tab.
+			"openFiles": [
+				"README.md",
+				"exercises/chapter01/CONCEPTS.md"
+			]
+		}
+	}
+}

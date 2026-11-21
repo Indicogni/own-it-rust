@@ -15,9 +15,12 @@
 //!   cargo progress reviewed ch04    record that you did chapter 4's review
 //!   cargo progress redo ch04 l08    archive your lesson and restore its starter
 //!   cargo progress solution ch04 l01    show where the model solution is
+//!   cargo progress doctor           check the tools, print the fix for each
+//!                                   missing one
 //!
-//! State lives in `.progress/` at the repository root (ignored by Git). Delete
-//! it to start over.
+//! State lives in `.progress/` at the repository root. It is not ignored by
+//! Git, so your history is saved with your commits (a codespace that is
+//! deleted keeps nothing else). Delete it to start over.
 //!
 //! Time limits, in seconds, can be changed with environment variables:
 //! `COACH_TEST_SECS` (one chapter's tests, default 120), `COACH_DRILL_SECS`
@@ -69,6 +72,7 @@ fn main() -> ExitCode {
         ["progress", "redo", chapter, lesson] => repo.redo(chapter, lesson, now).map(say),
         ["progress", "solution", unit] => repo.solution(unit, None).map(say),
         ["progress", "solution", unit, item] => repo.solution(unit, Some(item)).map(say),
+        ["progress", "doctor"] => repo.doctor(),
         _ => Err(USAGE.to_string()),
     };
     match result {
@@ -109,7 +113,8 @@ const USAGE: &str = "usage:
   cargo progress all                also test the project, ecosystem, checkpoints, mastery, capstones
   cargo progress reviewed ch04      record a finished review (--early: before it is due)
   cargo progress redo ch04 l08      archive your lesson and restore its starter
-  cargo progress solution ch04 l01  show where the model solution is";
+  cargo progress solution ch04 l01  show where the model solution is
+  cargo progress doctor             check your setup and show how to fix what is missing";
 
 // ------------------------------------------------------------- repository
 
@@ -404,7 +409,15 @@ fn run_limited(command: &mut Command, limit: Duration) -> Result<Finished, Strin
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .map_err(|e| format!("could not start {program}: {e}"))?;
+        .map_err(|e| {
+            // NotFound covers both forms of a missing program: "os error 2"
+            // on Unix and the "program not found" error of Windows.
+            if e.kind() == std::io::ErrorKind::NotFound {
+                format!("{program} is not installed, or not on PATH")
+            } else {
+                format!("could not start {program}: {e}")
+            }
+        })?;
     let stdout = Drain::start(child.stdout.take());
     let stderr = Drain::start(child.stderr.take());
     let deadline = Instant::now() + limit;
@@ -2150,6 +2163,622 @@ impl Repo {
     }
 }
 
+// ------------------------------------------------------------ setup check
+
+/// The dated nightly of the Miri labs (README, "The nightly toolchain").
+const NIGHTLY: &str = "nightly-2026-11-20";
+/// How long one tool may take to report its version.
+const PROBE_SECS: u64 = 15;
+
+/// Where the coach runs. The fixes and the advice differ a little.
+#[derive(Clone, Copy, PartialEq, Debug)]
+enum Place {
+    Codespaces,
+    /// The course's dev container (it sets DEVCONTAINER=true), or any
+    /// container that VS Code opened (REMOTE_CONTAINERS=true).
+    DevContainer,
+    /// Some other container, such as toolbox or distrobox: only a marker
+    /// file such as `/.dockerenv` says so.
+    OtherContainer,
+    OwnComputer,
+}
+
+impl Place {
+    fn label(self) -> &'static str {
+        match self {
+            Place::Codespaces => "GitHub Codespaces",
+            Place::DevContainer => "the course dev container",
+            Place::OtherContainer => "a container (not the course dev container)",
+            Place::OwnComputer => "your own computer",
+        }
+    }
+}
+
+/// Finds the environment from its variables (`var`) and from whether a
+/// container marker file such as `/.dockerenv` exists.
+fn place_from(var: impl Fn(&str) -> Option<String>, container_file: bool) -> Place {
+    let is_true = |name: &str| var(name).is_some_and(|value| value.trim() == "true");
+    if is_true("CODESPACES") {
+        Place::Codespaces
+    } else if is_true("REMOTE_CONTAINERS") || is_true("DEVCONTAINER") {
+        Place::DevContainer
+    } else if container_file {
+        Place::OtherContainer
+    } else {
+        Place::OwnComputer
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Debug)]
+enum Os {
+    Mac,
+    Linux,
+    Windows,
+}
+
+impl Os {
+    fn from_name(name: &str) -> Os {
+        match name {
+            "macos" => Os::Mac,
+            "windows" => Os::Windows,
+            _ => Os::Linux,
+        }
+    }
+
+    /// Picks the text for this system.
+    fn pick<'a>(self, mac: &'a str, linux: &'a str, windows: &'a str) -> &'a str {
+        match self {
+            Os::Mac => mac,
+            Os::Linux => linux,
+            Os::Windows => windows,
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Debug)]
+enum Need {
+    /// Every chapter needs it: the doctor fails without it.
+    Required,
+    /// Only some labs need it: reported, never a failure.
+    Optional,
+}
+
+#[derive(Clone, Copy, PartialEq, Debug)]
+enum Status {
+    Found,
+    MissingRequired,
+    MissingOptional,
+}
+
+impl Status {
+    fn classify(need: Need, found: bool) -> Status {
+        match (found, need) {
+            (true, _) => Status::Found,
+            (false, Need::Required) => Status::MissingRequired,
+            (false, Need::Optional) => Status::MissingOptional,
+        }
+    }
+
+    fn symbol(self) -> &'static str {
+        match self {
+            Status::Found => "✓",
+            Status::MissingRequired => "✗",
+            Status::MissingOptional => "·",
+        }
+    }
+}
+
+/// The result of one check.
+struct Check {
+    name: &'static str,
+    need: Need,
+    /// What the tool is needed for.
+    purpose: &'static str,
+    /// `Ok(version or detail)` when found, `Err(what is wrong)` when not.
+    found: Result<String, String>,
+    /// The command or step that fixes it.
+    fix: String,
+}
+
+impl Check {
+    fn status(&self) -> Status {
+        Status::classify(self.need, self.found.is_ok())
+    }
+}
+
+/// `rustc 1.99.0 (b940084d7 2026-09-28)` -> `1.99.0`. The same for cargo.
+fn tool_version(output: &str) -> Option<&str> {
+    let mut words = output.lines().next()?.split_whitespace();
+    words.next()?;
+    words.next()
+}
+
+/// The `channel` of a `rust-toolchain.toml`.
+fn toolchain_channel(text: &str) -> Option<String> {
+    text.lines().find_map(|line| {
+        let (key, value) = line.split_once('=')?;
+        (key.trim() == "channel")
+            .then(|| value.trim().trim_matches('"').to_string())
+            .filter(|channel| !channel.is_empty())
+    })
+}
+
+/// Whether `rustup toolchain list` shows the toolchain `name`, which is
+/// listed with the host added: `nightly-2026-11-20-aarch64-apple-darwin`.
+fn lists_toolchain(listing: &str, name: &str) -> bool {
+    listing.lines().any(|line| {
+        line.split_whitespace().next().is_some_and(|toolchain| {
+            toolchain == name || toolchain.starts_with(&format!("{name}-"))
+        })
+    })
+}
+
+/// Whether `rustup component list --installed` shows the component `name`
+/// (`miri-aarch64-apple-darwin`, or `rust-src` with no host).
+fn lists_component(listing: &str, name: &str) -> bool {
+    listing.lines().any(|line| {
+        let line = line.trim();
+        line == name || line.starts_with(&format!("{name}-"))
+    })
+}
+
+/// The first line of a tool's answer, short enough for one row.
+fn first_line(text: &str) -> String {
+    let line = text.lines().map(str::trim).find(|line| !line.is_empty());
+    let line = line.unwrap_or("");
+    match line.char_indices().nth(60) {
+        Some((cut, _)) => format!("{}...", &line[..cut]),
+        None => line.to_string(),
+    }
+}
+
+impl Repo {
+    /// Runs `program args` from the repository root, so rustup applies the
+    /// course's `rust-toolchain.toml`, and returns its first line of output.
+    /// Never waits longer than `PROBE_SECS`, and never lets rustup download.
+    fn probe(&self, program: &str, args: &[&str]) -> Result<String, String> {
+        self.probe_output(program, args)
+            .map(|(stdout, stderr)| first_line(&format!("{stdout}\n{stderr}")))
+    }
+
+    /// Like `probe`, but returns the whole standard output.
+    fn probe_all(&self, program: &str, args: &[&str]) -> Result<String, String> {
+        self.probe_output(program, args).map(|(stdout, _)| stdout)
+    }
+
+    /// Runs a probe and returns (stdout, stderr) when it succeeded.
+    fn probe_output(&self, program: &str, args: &[&str]) -> Result<(String, String), String> {
+        let mut command = Command::new(program);
+        command
+            .current_dir(&self.root)
+            .env("RUSTUP_AUTO_INSTALL", "0")
+            .args(args);
+        let finished = run_limited(&mut command, Duration::from_secs(PROBE_SECS))?;
+        match finished.ended {
+            Ended::Exited(status) if status.success() => Ok((finished.stdout, finished.stderr)),
+            Ended::Exited(status) => {
+                let why = first_line(&finished.stderr);
+                Err(if why.is_empty() {
+                    format!("{program} failed ({status})")
+                } else {
+                    format!("{program} failed: {why}")
+                })
+            }
+            Ended::TimedOut => Err(format!("{program} did not answer within {PROBE_SECS} s")),
+        }
+    }
+
+    /// `cargo progress doctor`: checks the tools the course uses and prints
+    /// the fix for each missing one. Fails only when a required tool is
+    /// missing.
+    fn doctor(&self) -> Result<(), String> {
+        let os = Os::from_name(std::env::consts::OS);
+        let place = place_from(
+            |name| std::env::var(name).ok(),
+            Path::new("/.dockerenv").exists() || Path::new("/run/.containerenv").exists(),
+        );
+        let checks = self.setup_checks(os, place);
+        let width = checks
+            .iter()
+            .map(|check| check.name.len())
+            .max()
+            .unwrap_or(0);
+        println!("Setup check");
+        let system = os.pick("macOS", "Linux", "Windows");
+        println!("Environment: {} ({system})", place.label());
+        println!("✓ found   ✗ missing, every chapter needs it   · missing, some labs need it");
+        for (need, title) in [
+            (Need::Required, "\nNeeded for every chapter:"),
+            (
+                Need::Optional,
+                "\nNeeded only for some labs (install each when you get there):",
+            ),
+        ] {
+            println!("{title}");
+            for check in checks.iter().filter(|check| check.need == need) {
+                let detail = match &check.found {
+                    Ok(detail) | Err(detail) => detail,
+                };
+                println!(
+                    "  {} {:<width$}  {detail}",
+                    check.status().symbol(),
+                    check.name
+                );
+                if check.found.is_err() {
+                    println!("      needed for: {}", check.purpose);
+                    println!("      fix: {}", check.fix);
+                }
+            }
+        }
+        let missing = |status: Status| {
+            checks
+                .iter()
+                .filter(|check| check.status() == status)
+                .count()
+        };
+        let required = missing(Status::MissingRequired);
+        let optional = missing(Status::MissingOptional);
+        println!();
+        if os == Os::Linux && required + optional > 0 {
+            println!(
+                "Package names are those of Debian and Ubuntu. Other Linux systems use \
+                 similar names."
+            );
+        }
+        let preinstalled_missing = checks
+            .iter()
+            .any(|check| check.found.is_err() && !matches!(check.name, "Miri" | "Docker"));
+        if matches!(place, Place::Codespaces | Place::DevContainer) && preinstalled_missing {
+            println!(
+                "The dev container should already contain this. Rebuild it: in VS Code, \
+                 run \"Dev Containers: Rebuild Container\" (in Codespaces: \"Codespaces: \
+                 Rebuild Container\") from the Command Palette."
+            );
+        }
+        if required > 0 {
+            return Err(format!(
+                "{required} required check(s) failed. Run the fix commands above, then run \
+                 `cargo progress doctor` again."
+            ));
+        }
+        match optional {
+            0 => println!("Everything is installed."),
+            n => println!(
+                "Everything the chapters need is installed. {n} optional tool(s) are missing; \
+                 install each one when you reach the lab that needs it."
+            ),
+        }
+        Ok(())
+    }
+
+    fn setup_checks(&self, os: Os, place: Place) -> Vec<Check> {
+        let pinned = fs::read_to_string(self.root.join("rust-toolchain.toml"))
+            .ok()
+            .and_then(|text| toolchain_channel(&text));
+        // `None` when rustup itself is missing.
+        let toolchains = self.probe_all("rustup", &["toolchain", "list"]).ok();
+        let fix_toolchain = match (&toolchains, &pinned) {
+            (None, _) => "install rustup from https://rustup.rs, then run `rustup toolchain \
+                          install` in the repository folder"
+                .to_string(),
+            (Some(list), Some(want)) if lists_toolchain(list, want) => format!(
+                "leave out any `+toolchain` in the command, unset RUSTUP_TOOLCHAIN, and run \
+                 `rustup override unset` in the repository folder ({want} is installed, but \
+                 another version was chosen)"
+            ),
+            (Some(_), _) => "rustup toolchain install   (in the repository folder: it installs \
+                             the version that rust-toolchain.toml names)"
+                .to_string(),
+        };
+        let version_check = |name: &'static str, program: &str| {
+            let found = self.probe(program, &["--version"]).and_then(|answer| {
+                let version = tool_version(&answer).unwrap_or("unknown").to_string();
+                match &pinned {
+                    Some(want) if *want == version => Ok(version),
+                    Some(want) => Err(format!("{version} is active; the course needs {want}")),
+                    None => Err(format!(
+                        "{version} is active, but rust-toolchain.toml names no version"
+                    )),
+                }
+            });
+            Check {
+                name,
+                need: Need::Required,
+                purpose: "every chapter",
+                found,
+                fix: fix_toolchain.clone(),
+            }
+        };
+        let for_toolchain = pinned
+            .as_ref()
+            .map(|want| format!(" --toolchain {want}"))
+            .unwrap_or_default();
+        let mut checks = vec![
+            version_check("rustc", "rustc"),
+            version_check("cargo", "cargo"),
+            Check {
+                name: "clippy",
+                need: Need::Required,
+                purpose: "`cargo clippy`, the linter the lessons use",
+                found: self.probe("cargo", &["clippy", "--version"]),
+                fix: "rustup component add clippy".into(),
+            },
+            Check {
+                name: "rustfmt",
+                need: Need::Required,
+                purpose: "`cargo fmt`, the code formatter",
+                found: self.probe("rustfmt", &["--version"]),
+                fix: "rustup component add rustfmt".into(),
+            },
+        ];
+
+        // The whole path: `probe` shortens its answer for display, and a
+        // sysroot is often longer than that (for example in the dev
+        // container, /home/vscode/.rustup/toolchains/1.99.0-<host>).
+        let sysroot = self
+            .probe_all("rustc", &["--print", "sysroot"])
+            .ok()
+            .map(|out| out.trim().to_string())
+            .filter(|out| !out.is_empty())
+            .map(PathBuf::from);
+        let in_sysroot = |parts: &[&str]| {
+            sysroot.as_ref().is_some_and(|root| {
+                parts
+                    .iter()
+                    .fold(root.clone(), |path, part| path.join(part))
+                    .exists()
+            })
+        };
+        let installed = |yes: bool, what: &str| {
+            if yes {
+                Ok("installed".to_string())
+            } else {
+                Err(format!("{what} is not installed for this toolchain"))
+            }
+        };
+        checks.push(Check {
+            name: "rust-src",
+            need: Need::Optional,
+            purpose: "rust-analyzer, to show and analyse the standard library",
+            found: installed(
+                in_sysroot(&["lib", "rustlib", "src", "rust", "library"]),
+                "rust-src",
+            ),
+            fix: "rustup component add rust-src".into(),
+        });
+        checks.push(Check {
+            name: "git",
+            need: Need::Optional,
+            purpose: "saving your work and your .progress/ history in commits",
+            found: self.probe("git", &["--version"]),
+            fix: os
+                .pick(
+                    "xcode-select --install   (or: brew install git)",
+                    "sudo apt install git",
+                    "winget install --id Git.Git -e --source winget",
+                )
+                .into(),
+        });
+        checks.push(Check {
+            name: "aarch64-unknown-none",
+            need: Need::Optional,
+            purpose: "the kernel capstone (capstones/kernel)",
+            found: installed(
+                in_sysroot(&["lib", "rustlib", "aarch64-unknown-none"]),
+                "the target",
+            ),
+            fix: format!("rustup target add aarch64-unknown-none{for_toolchain}"),
+        });
+        checks.push(self.qemu_check(os));
+        checks.push(self.c_compiler_check(os));
+        checks.push(self.debugger_check(os, &in_sysroot));
+        checks.push(self.miri_check(toolchains.as_deref()));
+        checks.push(Check {
+            name: "Docker",
+            need: Need::Optional,
+            purpose: "the Dockerfile lab of M11 and the Docker labs of M9",
+            found: self.probe("docker", &["--version"]),
+            fix: match place {
+                Place::Codespaces | Place::DevContainer => {
+                    "Docker is not part of the dev container. Do the Docker labs on your \
+                     own computer, with Docker installed there."
+                }
+                Place::OtherContainer => {
+                    "Docker usually does not run inside a container. Do the Docker labs \
+                     on the computer that runs this container, with Docker installed there."
+                }
+                Place::OwnComputer => os.pick(
+                    "install Docker Desktop, or a free alternative such as Podman, Rancher \
+                     Desktop or Colima (OrbStack is free for personal use)",
+                    "install Docker Engine: https://docs.docker.com/engine/install/",
+                    "install Docker Desktop, or a free alternative such as Podman or \
+                     Rancher Desktop",
+                ),
+            }
+            .into(),
+        });
+        checks
+    }
+
+    fn qemu_check(&self, os: Os) -> Check {
+        let mut found = self.probe("qemu-system-aarch64", &["--version"]);
+        // The Windows installer does not add its folder to PATH.
+        if os == Os::Windows && found.is_err() {
+            let folder = std::env::var_os("ProgramFiles")
+                .map(PathBuf::from)
+                .unwrap_or_else(|| PathBuf::from(r"C:\Program Files"))
+                .join("qemu");
+            if folder.join("qemu-system-aarch64.exe").is_file() {
+                found = Err(format!(
+                    "installed in {}, but that folder is not on PATH",
+                    folder.display()
+                ));
+            }
+        }
+        Check {
+            name: "qemu-system-aarch64",
+            need: Need::Optional,
+            purpose: "the kernel capstone, which runs your kernel in QEMU",
+            found,
+            fix: os
+                .pick(
+                    "brew install qemu",
+                    "sudo apt install qemu-system-arm   (it contains qemu-system-aarch64)",
+                    "install QEMU from https://www.qemu.org/download/, then add its folder \
+                     (usually C:\\Program Files\\qemu) to PATH",
+                )
+                .into(),
+        }
+    }
+
+    fn c_compiler_check(&self, os: Os) -> Check {
+        let first_found = |programs: &[&str]| {
+            let mut last = Err(String::new());
+            for program in programs {
+                last = self.probe(program, &["--version"]);
+                if last.is_ok() {
+                    break;
+                }
+            }
+            last
+        };
+        let found = match os {
+            // Without the command line tools, `cc` on macOS is a stub that
+            // opens an installer window, so ask xcode-select first.
+            Os::Mac => self
+                .probe("xcode-select", &["-p"])
+                .map_err(|_| "the Xcode command line tools are not installed".to_string())
+                .and_then(|_| self.probe("cc", &["--version"])),
+            Os::Linux => first_found(&["cc", "gcc", "clang"])
+                .map_err(|_| "no cc, gcc or clang on PATH".to_string()),
+            Os::Windows => self.msvc_or_gcc(),
+        };
+        Check {
+            name: "C compiler",
+            need: Need::Optional,
+            purpose: "the labs of chapter 24, M6 (FFI) and M11",
+            found,
+            fix: os
+                .pick(
+                    "xcode-select --install",
+                    "sudo apt install build-essential",
+                    "install the Visual Studio Build Tools with the \"Desktop development \
+                     with C++\" workload (Rust's MSVC toolchain needs it anyway)",
+                )
+                .into(),
+        }
+    }
+
+    /// On Windows: the Visual C++ tools (found with vswhere, which the
+    /// Visual Studio installer puts in a fixed place), or gcc for the GNU
+    /// toolchain.
+    fn msvc_or_gcc(&self) -> Result<String, String> {
+        let host = self
+            .probe("rustc", &["--print", "host-tuple"])
+            .unwrap_or_default();
+        if host.contains("windows-gnu") {
+            return self.probe("gcc", &["--version"]);
+        }
+        let tools = if host.starts_with("aarch64") {
+            "Microsoft.VisualStudio.Component.VC.Tools.ARM64"
+        } else {
+            "Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
+        };
+        let vswhere = std::env::var_os("ProgramFiles(x86)")
+            .map(PathBuf::from)
+            .unwrap_or_else(|| PathBuf::from(r"C:\Program Files (x86)"))
+            .join("Microsoft Visual Studio")
+            .join("Installer")
+            .join("vswhere.exe");
+        let program = vswhere.to_string_lossy().into_owned();
+        match self.probe(
+            &program,
+            &[
+                "-latest",
+                "-products",
+                "*",
+                "-requires",
+                tools,
+                "-property",
+                "installationPath",
+            ],
+        ) {
+            Ok(path) if !path.is_empty() => Ok(format!("Visual C++ tools in {path}")),
+            _ => self
+                .probe("cl", &[])
+                .map(|_| "cl.exe on PATH".to_string())
+                .map_err(|_| "the Visual C++ build tools were not found".to_string()),
+        }
+    }
+
+    fn debugger_check(&self, os: Os, in_sysroot: &dyn Fn(&[&str]) -> bool) -> Check {
+        let wrapper = |name: &str| {
+            let exe = format!("{name}{}", std::env::consts::EXE_SUFFIX);
+            in_sysroot(&["bin", name]) || in_sysroot(&["bin", &exe])
+        };
+        // On macOS without the command line tools, `lldb` is a stub that
+        // opens an installer window, so ask xcode-select first.
+        let lldb_allowed = os != Os::Mac || self.probe("xcode-select", &["-p"]).is_ok();
+        let lldb = wrapper("rust-lldb") && lldb_allowed;
+        let found = if lldb && let Ok(version) = self.probe("lldb", &["--version"]) {
+            Ok(format!("rust-lldb ({version})"))
+        } else if wrapper("rust-gdb")
+            && let Ok(version) = self.probe("gdb", &["--version"])
+        {
+            Ok(format!("rust-gdb ({version})"))
+        } else if !wrapper("rust-lldb") && !wrapper("rust-gdb") {
+            Err("this toolchain has no rust-gdb or rust-lldb".to_string())
+        } else {
+            Err("neither lldb nor gdb is installed".to_string())
+        };
+        Check {
+            name: "debugger",
+            need: Need::Optional,
+            purpose: "the debugger lab of M9 (rust-lldb or rust-gdb)",
+            found,
+            fix: os
+                .pick(
+                    "xcode-select --install   (it contains lldb)",
+                    "sudo apt install gdb",
+                    "Rust for Windows usually has no rust-gdb or rust-lldb. Do the M9 \
+                     debugger lab in the dev container.",
+                )
+                .into(),
+        }
+    }
+
+    /// `toolchains` is the output of `rustup toolchain list`, `None` without
+    /// rustup.
+    fn miri_check(&self, toolchains: Option<&str>) -> Check {
+        let found = match toolchains {
+            None => Err("rustup is not installed, so no nightly toolchain can be checked".into()),
+            Some(list) if lists_toolchain(list, NIGHTLY) => {
+                let components = self
+                    .probe_all(
+                        "rustup",
+                        &["component", "list", "--installed", "--toolchain", NIGHTLY],
+                    )
+                    .unwrap_or_default();
+                if lists_component(&components, "miri") {
+                    Ok(format!("{NIGHTLY} with miri"))
+                } else {
+                    Err(format!("{NIGHTLY} is installed, but without miri"))
+                }
+            }
+            Some(_) => Err(format!("{NIGHTLY} is not installed")),
+        };
+        Check {
+            name: "Miri",
+            need: Need::Optional,
+            purpose: "the Miri labs (chapter 23, the project, M2, M6 and others)",
+            found,
+            fix: format!(
+                "rustup toolchain install {NIGHTLY} --component miri --component rust-src"
+            ),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -2547,6 +3176,17 @@ mod tests {
     fn helper_that_never_finishes() {
         println!("started");
         std::thread::sleep(Duration::from_secs(600));
+    }
+
+    /// A missing program gets the same plain message on every system (on
+    /// Windows the error has no OS code, only "program not found").
+    #[test]
+    fn a_missing_program_is_reported_as_not_installed() {
+        let name = "own-it-no-such-program-4711";
+        let message = run_limited(&mut Command::new(name), Duration::from_secs(5))
+            .err()
+            .expect("the program does not exist");
+        assert_eq!(message, format!("{name} is not installed, or not on PATH"));
     }
 
     // Fix 4: a wall-clock limit with kill, and the names of unfinished tests.
@@ -3128,6 +3768,133 @@ mod tests {
                 // No `test result:` line: this program crashed.
                 ("m04".to_string(), group(1, 0, true)),
             ]
+        );
+    }
+
+    #[test]
+    fn doctor_reads_versions_and_the_pinned_channel() {
+        assert_eq!(
+            tool_version("rustc 1.99.0 (b940084d7 2026-09-28)\n"),
+            Some("1.99.0")
+        );
+        assert_eq!(
+            tool_version("cargo 1.99.0 (5f94df478 2026-08-27)"),
+            Some("1.99.0")
+        );
+        assert_eq!(
+            tool_version("rustc 1.102.0-nightly (6905905bb 2026-11-19)"),
+            Some("1.102.0-nightly")
+        );
+        assert_eq!(tool_version(""), None);
+        assert_eq!(tool_version("rustc"), None);
+        let file = "[toolchain]\nchannel = \"1.99.0\"\nprofile = \"minimal\"\n";
+        assert_eq!(toolchain_channel(file).as_deref(), Some("1.99.0"));
+        assert_eq!(
+            toolchain_channel("channel=\"1.99.0\""),
+            Some("1.99.0".into())
+        );
+        assert_eq!(
+            toolchain_channel("[toolchain]\nprofile = \"minimal\"\n"),
+            None
+        );
+        assert_eq!(toolchain_channel("channel = \"\"\n"), None);
+    }
+
+    #[test]
+    fn doctor_finds_the_environment() {
+        let env = |pairs: &[(&str, &str)]| {
+            let map: BTreeMap<String, String> = pairs
+                .iter()
+                .map(|(k, v)| (k.to_string(), v.to_string()))
+                .collect();
+            move |name: &str| map.get(name).cloned()
+        };
+        assert_eq!(place_from(env(&[]), false), Place::OwnComputer);
+        assert_eq!(
+            place_from(env(&[("CODESPACES", "true")]), false),
+            Place::Codespaces
+        );
+        // A codespace is also a container; Codespaces wins.
+        assert_eq!(
+            place_from(
+                env(&[("CODESPACES", "true"), ("REMOTE_CONTAINERS", "true")]),
+                true
+            ),
+            Place::Codespaces
+        );
+        assert_eq!(
+            place_from(env(&[("REMOTE_CONTAINERS", "true")]), false),
+            Place::DevContainer
+        );
+        assert_eq!(
+            place_from(env(&[("DEVCONTAINER", "true")]), false),
+            Place::DevContainer
+        );
+        // A marker file alone (toolbox, distrobox, another image) is not
+        // the course dev container.
+        assert_eq!(place_from(env(&[]), true), Place::OtherContainer);
+        assert_eq!(
+            place_from(env(&[("DEVCONTAINER", "true")]), true),
+            Place::DevContainer
+        );
+        assert_eq!(
+            place_from(env(&[("CODESPACES", "false")]), false),
+            Place::OwnComputer
+        );
+        assert_eq!(Os::from_name("macos"), Os::Mac);
+        assert_eq!(Os::from_name("windows"), Os::Windows);
+        assert_eq!(Os::from_name("linux"), Os::Linux);
+        assert_eq!(Os::Windows.pick("m", "l", "w"), "w");
+    }
+
+    #[test]
+    fn doctor_classifies_results() {
+        assert_eq!(Status::classify(Need::Required, true), Status::Found);
+        assert_eq!(Status::classify(Need::Optional, true), Status::Found);
+        assert_eq!(
+            Status::classify(Need::Required, false),
+            Status::MissingRequired
+        );
+        assert_eq!(
+            Status::classify(Need::Optional, false),
+            Status::MissingOptional
+        );
+        let check = |need, found: Result<&str, &str>| Check {
+            name: "x",
+            need,
+            purpose: "",
+            found: found.map(str::to_string).map_err(str::to_string),
+            fix: String::new(),
+        };
+        assert_eq!(
+            check(Need::Optional, Err("gone")).status(),
+            Status::MissingOptional
+        );
+        assert_eq!(check(Need::Required, Ok("1.99.0")).status(), Status::Found);
+
+        let toolchains = "stable-aarch64-apple-darwin (default)\n\
+                          nightly-aarch64-apple-darwin\n\
+                          nightly-2026-11-20-aarch64-apple-darwin\n\
+                          1.99.0-aarch64-apple-darwin (active)\n";
+        assert!(lists_toolchain(toolchains, "nightly-2026-11-20"));
+        assert!(lists_toolchain(toolchains, "1.99.0"));
+        assert!(!lists_toolchain(toolchains, "nightly-2026-11-21"));
+        assert!(!lists_toolchain(
+            "nightly-aarch64-apple-darwin\n",
+            "nightly-2026-11-20"
+        ));
+        let components = "cargo-aarch64-apple-darwin\nmiri-aarch64-apple-darwin\nrust-src\n";
+        assert!(lists_component(components, "miri"));
+        assert!(lists_component(components, "rust-src"));
+        assert!(!lists_component("cargo-x\nrust-src\n", "miri"));
+
+        assert_eq!(
+            first_line("\n  git version 2.51.0\nmore\n"),
+            "git version 2.51.0"
+        );
+        assert_eq!(
+            first_line(&"a".repeat(70)),
+            format!("{}...", "a".repeat(60))
         );
     }
 }
