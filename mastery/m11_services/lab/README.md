@@ -29,14 +29,15 @@ If a base image tag is not available to you, choose another one with `--build-ar
 ## Step 2 · Run
 
 ```sh
-cat > /tmp/beacon.env <<'ENV'
+BEACON_ENV="$(mktemp)" && echo "$BEACON_ENV"   # a new file only you can read
+cat > "$BEACON_ENV" <<'ENV'
 BEACON_ADMIN_USER=admin
 BEACON_ADMIN_PASSWORD=change-me-for-the-lab
 BEACON_TOKEN_KEY=0123456789abcdef0123456789abcdef-lab-only
 ENV
 
 docker volume create beacon-data
-docker run -d --name beacon --env-file /tmp/beacon.env \
+docker run -d --name beacon --env-file "$BEACON_ENV" \
   -p 127.0.0.1:7400:7400 -p 127.0.0.1:7401:7401 \
   -v beacon-data:/data beacon-server:lab
 docker logs beacon
@@ -70,7 +71,7 @@ Work through every line. For each, write what you ran and what you saw.
 docker rm -f beacon
 docker volume rm beacon-data
 docker rmi beacon-server:lab
-rm /tmp/beacon.env
+rm "$BEACON_ENV"   # in the same shell as Step 2; otherwise rm the path mktemp printed
 ```
 
 ## Questions for your notes

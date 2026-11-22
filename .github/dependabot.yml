@@ -1,0 +1,9 @@
+# Keeps the SHA-pinned GitHub Actions current. Cargo dependencies are pinned on
+# purpose (every lesson's output depends on them), so they are not updated
+# automatically; Dependabot alerts still report advisories for them.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

@@ -108,9 +108,12 @@ uses noVNC, a VNC client (a remote-screen viewer) that runs in a web page.
    on your computer and in a codespace. On your computer the address is
    usually <http://localhost:6080>; VS Code picks another port if 6080 is
    already in use. The devcontainer CLI does not forward ports by itself.
-   If you use it, add `"appPort": [6080]` to `.devcontainer/devcontainer.json`
-   on your computer (this publishes the port), then open
-   <http://localhost:6080>.
+   If you use it, add `"appPort": ["127.0.0.1:6080:6080"]` to
+   `.devcontainer/devcontainer.json` on your computer (this publishes the
+   port on your computer only, not on your network), then open
+   <http://localhost:6080>. The password below is public, so never publish
+   port 6080 on other addresses, and never make it *Public* in the
+   Codespaces *Ports* panel.
 2. Click *Connect* and enter the password `vscode`.
 3. In the VS Code terminal (which runs inside the container), start the game
    as usual, for example:

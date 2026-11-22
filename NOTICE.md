@@ -25,6 +25,10 @@ This summary does not replace the licences; where they differ, the licence texts
 
 A file that states its own licence keeps it. For example, the C libraries vendored under `mastery/m6_ffi/` and the font and sprite files of `capstones/game/assets/` were made for this course and say that they are MIT-licensed. Third-party crates that some packages download (listed in each package's `Cargo.lock`) keep their own licences.
 
+## Disclaimer
+
+The course is provided "as is", without warranty of any kind, as the licences say. Indicogni LLC is not liable for any damage or loss of data from using it. Some exercises run `unsafe` Rust, C code, build scripts, downloaded crates, Docker images, a kernel in QEMU and local network servers; read the [Disclaimer and safety](README.md#disclaimer-and-safety) section of the README before you start. Security problems: see [SECURITY.md](SECURITY.md).
+
 ## Trademarks
 
 This is an independent course. It is not affiliated with or endorsed by the Rust Foundation or any publisher. "Rust" and the Rust logo are trademarks of the Rust Foundation, used here under its trademark policy to refer to the programming language.

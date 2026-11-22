@@ -92,7 +92,7 @@ Done when:
 - **Optional tools:** `cargo-expand` prints the whole crate after expansion. It uses the compiler's unstable `-Zunpretty=expanded` option, but current versions (checked with 1.0.127) enable it on the pinned stable toolchain themselves, so no nightly is needed:
 
   ```sh
-  cargo install cargo-expand
+  cargo install --locked cargo-expand
   cargo expand --manifest-path ecosystem/Cargo.toml --lib e08_tooling
   ```
 
@@ -178,7 +178,7 @@ Optional: profile real code. Pick one tool:
 ```sh
 # Linux needs `perf` (Debian/Ubuntu: sudo apt install linux-tools-common linux-tools-$(uname -r)).
 # macOS uses dtrace and needs sudo.
-cargo install flamegraph
+cargo install --locked flamegraph
 cargo flamegraph --manifest-path ecosystem/Cargo.toml --profile profiling --example e08_bench
 
 # Or the Firefox Profiler UI, Linux and macOS:
@@ -201,5 +201,5 @@ Going further: [M7, lesson 02 · Reading a profile](../mastery/m7_perf/CONCEPTS.
 | cargo-mutants | `cargo install --locked cargo-mutants` | Automated version of E05's mutant tests: does any test fail when a line of your code changes? |
 | cargo-nextest | `cargo install --locked cargo-nextest` | Faster test runner, one process per test (avoids E07's tracing cache race by design) |
 | cargo-deny | `cargo install --locked cargo-deny` | Licenses, advisories, and duplicate versions in CI |
-| cargo-bloat | `cargo install cargo-bloat` | What makes the binary big |
+| cargo-bloat | `cargo install --locked cargo-bloat` | What makes the binary big |
 | cargo-outdated | `cargo install --locked cargo-outdated` | Which pinned versions are behind |

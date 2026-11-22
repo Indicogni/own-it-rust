@@ -15,6 +15,7 @@ An original, repository-based course by Indicogni LLC, published on [indicogni.c
 - [Tools](#tools)
 - [Guides](#guides)
 - [The course in numbers](#the-course-in-numbers)
+- [Disclaimer and safety](#disclaimer-and-safety)
 - [Licence, trademarks and errors](#licence-trademarks-and-errors)
 
 ## Who it is for
@@ -408,6 +409,20 @@ Counted from the starter files on 20 November 2026 by a script, not estimated:
 | Compiler drills, in 32 drill sets | 339 |
 | Predictions (answers you write in place of `guess()`) | 1,127 |
 | `#[test]` functions in the starters | 3,979 |
+
+## Disclaimer and safety
+
+Own It: Hands-On Mastery of Rust is educational material from Indicogni LLC, provided "as is", without warranty of any kind; see [LICENSE](LICENSE) and [LICENSE-TEXT](LICENSE-TEXT). Indicogni LLC is not liable for any damage or loss of data from using it. The model solutions show one way to solve each exercise: they are learning code, not production code, and have had no security audit.
+
+**What you run.** The exercises build and run code on your machine: `unsafe` Rust, C code compiled through FFI (Chapter 24, M6), build scripts, and third-party crates that some packages download from crates.io (pinned in each `Cargo.lock`). Optional labs install tools with `cargo install`, use a nightly toolchain with Miri and sanitizers, fuzz with cargo-fuzz (CPU-heavy, and it writes a corpus to disk), boot a small kernel in QEMU, build and run Docker images (M9, M11), and start local network servers (httpd, kvstore, M4, M11).
+
+- Work in the dev container or a codespace where you can. It keeps the course away from your own files. It is not a hardened sandbox: for the debugger it adds `SYS_PTRACE` and turns seccomp off.
+- Keep the course servers on `127.0.0.1`, as the course does. Do not expose them, or the browser desktop on port 6080 (password `vscode`), to a network, and never make a Codespaces port *Public*.
+- Do not point the httpd capstone's `--root` at a folder with private files.
+- Read code you got from someone else, such as a classmate's solution, before you run it.
+- Commit and push your work often. Deleting a codespace or a container volume deletes the work in it that you have not pushed.
+
+Report security problems as described in [SECURITY.md](SECURITY.md), not in a public issue.
 
 ## Licence, trademarks and errors
 
